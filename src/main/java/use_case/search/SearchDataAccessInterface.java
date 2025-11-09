@@ -20,9 +20,11 @@ public interface SearchDataAccessInterface {
      * Saves the user.
      * @param location the user to save
      */
+
     void save(Location location);
 
     /**
+    void save(Location location);
      * Returns the user with the given username.
      * @param locationName the username to look up
      * @return the user with the given username
