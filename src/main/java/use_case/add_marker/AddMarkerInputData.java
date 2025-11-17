@@ -1,7 +1,5 @@
 package use_case.add_marker;
 
-import entity.Coordinate;
-
 public class AddMarkerInputData
 {
     private final Coordinate coordinate;

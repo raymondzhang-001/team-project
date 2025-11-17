@@ -1,11 +1,25 @@
 package entity;
 
-public class Marker<A, B> {
-    public final A first;
-    public final B second;
+/**
+ * Represents the marker(pin) on the map
+ */
+public class Marker {
+    private final Location location;
 
-    public Marker(A first, B second) {
-        this.first = first;
-        this.second = second;
+    public Marker(Location location) {
+        this.location = location;
     }
-}
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public double getLatitude() {
+        return location.getLatitude();
+    }
+
+    public double getLongitude() {
+        return location.getLongitude();
+    }
+
+    }
