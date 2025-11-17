@@ -9,7 +9,7 @@ import java.util.List;
  * DAO interface for AddMarkerAccessInterface
  */
 
-public interface AddMarkerAccessInterface {
+public interface AddMarkerDataAccessInterface {
     /**
      * checks if a marker already exists at the given location
      */

@@ -10,6 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import entity.Location;
 import use_case.search.SearchDataAccessInterface;
+import use_case.add_marker.AddMarkerDataAccessInterface;
 
 /**
  * Database Interactor implements SearchDataAccessInterface
