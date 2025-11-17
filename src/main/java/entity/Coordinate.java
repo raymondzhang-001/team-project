@@ -9,7 +9,7 @@ public class Coordinate {
         this.longitude = longitude;
     }
 
-    Pair<double[], double[]> getCoordinates(){
-        return new Pair(latitude, longitude);
+    Marker<double[], double[]> getCoordinates(){
+        return new Marker(latitude, longitude);
     }
 }

@@ -1,10 +1,10 @@
 package entity;
 
-public class Pair<A, B> {
+public class Marker<A, B> {
     public final A first;
     public final B second;
 
-    public Pair(A first, B second) {
+    public Marker(A first, B second) {
         this.first = first;
         this.second = second;
     }

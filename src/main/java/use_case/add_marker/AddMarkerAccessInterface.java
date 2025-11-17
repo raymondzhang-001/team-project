@@ -1,24 +1,28 @@
 package use_case.add_marker;
 
-import entity.Coordinate;
+import entity.Location;
+import entity.Marker;
 
-import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * DAO interface for AddMarkerAccessInterface
+ */
 
 public interface AddMarkerAccessInterface {
+    /**
+     * checks if a marker already exists at the given location
+     */
+    boolean exists(Location location);
 
     /**
-     * Checks if the marker with the same coordinate exists
-     * @param coordinate the coordinate to look for
-     * @return true if the same coordinate exists
+     * saves the marker
      */
-    boolean existsByCoordinate(Coordinate coordinate) throws Exception;
+    void save(Marker marker);
 
     /**
-     * Saves the coordinate
-     * @param coordinate the user to save
+     * Returns all markers currently stored
      */
-    void save(Coordinate coordinate);
-
-    ArrayList<Coordinate> getCurrentMarker();
+    List<Marker> getAllMarkers();
 
 }
