@@ -1,5 +1,6 @@
 package view;
 
+import data_access.RoutingDataAccessObject;
 import interface_adapter.search.SearchController;
 import interface_adapter.search.SearchState;
 import interface_adapter.search.SearchViewModel;
@@ -14,6 +15,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * The View for when the user is browsing map and search for location.
@@ -28,10 +31,14 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     private final JTextField searchInputField = new JTextField(15);
     /* The search button */
     private final JButton search =  new JButton("Search");
+    /* The route button */
+    private final JButton routeButton = new JButton("Route");
     /* Controller of search view */
     private transient SearchController searchController = null;
     /* initialize a default mapPanel view */
     private final MapPanel mapPanel = new MapPanel();
+
+    private RoutingDataAccessObject routingDao = null;
 
     /**
      * Construct the SearchView JPanel from its SearchViewModel (contain states of the search view)
@@ -54,6 +61,49 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
                     }
                 }
         );
+
+        // Route button listener: take last two markers and request a route
+        routeButton.addActionListener(evt -> {
+            if (routingDao == null) {
+                JOptionPane.showMessageDialog(this, "Routing backend not configured.");
+                return;
+            }
+            List<org.jxmapviewer.viewer.GeoPosition> lastTwo = mapPanel.getLastTwoMarkerPositions();
+            if (lastTwo.size() < 2) {
+                JOptionPane.showMessageDialog(this, "Add two markers first (click on the map).");
+                return;
+            }
+
+            // Run routing off the EDT
+            routeButton.setEnabled(false);
+            SwingWorker<List<org.jxmapviewer.viewer.GeoPosition>, Void> worker = new SwingWorker<>() {
+                @Override
+                protected List<org.jxmapviewer.viewer.GeoPosition> doInBackground() throws Exception {
+                    try {
+                        return routingDao.getRoute(lastTwo.get(0), lastTwo.get(1), "walking");
+                    } catch (IOException | InterruptedException e) {
+                        throw e;
+                    }
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        List<org.jxmapviewer.viewer.GeoPosition> route = get();
+                        if (route == null || route.isEmpty()) {
+                            JOptionPane.showMessageDialog(SearchView.this, "No route found.");
+                        } else {
+                            mapPanel.setRoute(route);
+                        }
+                    } catch (Exception e) {
+                        JOptionPane.showMessageDialog(SearchView.this, "Routing error: " + e.getMessage());
+                    } finally {
+                        routeButton.setEnabled(true);
+                    }
+                }
+            };
+            worker.execute();
+        });
 
         /* Change LocationName in search state when typing to search field */
         searchInputField.getDocument().addDocumentListener(new DocumentListener() {
@@ -82,7 +132,11 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
 
         /* Deal with UI appearance */
         searchLocationPanel.add(searchInputField, BorderLayout.CENTER);
-        searchLocationPanel.add(search, BorderLayout.EAST);
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.add(search, BorderLayout.NORTH);
+        rightPanel.add(routeButton, BorderLayout.SOUTH);
+        searchLocationPanel.add(rightPanel, BorderLayout.EAST);
+
         JPanel searchContainer = new JPanel(new BorderLayout());
         searchContainer.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20)); // 上10, 左右20, 下10像素边距
         searchContainer.add(searchLocationPanel, BorderLayout.CENTER);
@@ -135,6 +189,10 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
 
     public void setSearchController(SearchController searchController) {
         this.searchController = searchController;
+    }
+
+    public void setRoutingDataAccessObject(RoutingDataAccessObject routingDao) {
+        this.routingDao = routingDao;
     }
 
 }

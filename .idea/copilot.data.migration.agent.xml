@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AgentMigrationStateService">
+    <option name="pendingSessionIds">
+      <option value="b5068681-1309-4939-9541-959cce3a5335" />
+    </option>
+    <option name="pendingTurns">
+      <map>
+        <entry key="b5068681-1309-4939-9541-959cce3a5335">
+          <value>
+            <set>
+              <option value="0662b19e-7f8e-4a39-a942-0730b798d260" />
+            </set>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <pendingWorkingSetItems>
+      <entry key="b5068681-1309-4939-9541-959cce3a5335">
+        <set>
+          <option value="file://$PROJECT_DIR$/src/main/java/view/MapPanel.java" />
+          <option value="file://$PROJECT_DIR$/src/main/java/data_access/RoutingDataAccessObject.java" />
+          <option value="file://$PROJECT_DIR$/src/main/java/view/RoutePainter.java" />
+          <option value="file://$PROJECT_DIR$/src/main/java/app/AppBuilder.java" />
+          <option value="file://$PROJECT_DIR$/src/main/java/view/SearchView.java" />
+        </set>
+      </entry>
+    </pendingWorkingSetItems>
+  </component>
+</project>

@@ -1,6 +1,7 @@
 package app;
 
 import data_access.OSMDataAccessObject;
+import data_access.RoutingDataAccessObject;
 import interface_adapter.ViewManagerModel;
 import interface_adapter.search.SearchController;
 import interface_adapter.search.SearchPresenter;
@@ -26,6 +27,7 @@ public class AppBuilder {
 
     private final HttpClient client = HttpClient.newHttpClient();
     final OSMDataAccessObject osmDataAccessObject = new OSMDataAccessObject(client);
+    final RoutingDataAccessObject routingDataAccessObject = new RoutingDataAccessObject(client);
 
 
     private SearchViewModel searchViewModel;
@@ -49,6 +51,10 @@ public class AppBuilder {
 
         SearchController searchController = new SearchController(searchInteractor);
         searchView.setSearchController(searchController);
+
+        // provide routing DAO to the view so it can request routes
+        searchView.setRoutingDataAccessObject(routingDataAccessObject);
+
         return this;
     }
 
