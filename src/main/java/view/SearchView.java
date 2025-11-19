@@ -50,7 +50,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
 
                         searchController.execute(
                                 currentState.getLocationName()
-                            );
+                        );
                     }
                 }
         );
