@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 /**
  * contain map tile
@@ -37,7 +38,10 @@ public class MapPanel extends JPanel {
     private final WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
 
     private RoutePainter routePainter; // initialize in constructor and allow reassignment
+    private NumberedMarkerPainter numberedMarkerPainter;
     private final CompoundPainter<JXMapViewer> compoundPainter = new CompoundPainter<>();
+
+    private Consumer<GeoPosition> clickListener = null;
 
     public MapPanel() {
         setLayout(new BorderLayout());
@@ -53,15 +57,14 @@ public class MapPanel extends JPanel {
         mapViewer.setZoom(5);
 
         waypointPainter.setWaypoints(waypoints);
-        // initialize route painter here
         routePainter = new RoutePainter(null);
-        compoundPainter.setPainters(Arrays.asList(routePainter, waypointPainter));
+        numberedMarkerPainter = new NumberedMarkerPainter(markerPositions);
+        compoundPainter.setPainters(Arrays.asList(routePainter, waypointPainter, numberedMarkerPainter));
         mapViewer.setOverlayPainter(compoundPainter);
 
         add(mapViewer, BorderLayout.CENTER);
 
         enableDragging();
-
 
         enableClickToAddMarker();
     }
@@ -78,7 +81,12 @@ public class MapPanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 GeoPosition gp = mapViewer.convertPointToGeoPosition(e.getPoint());
-                addMarker(gp);
+                // notify external listener if present
+                if (clickListener != null) {
+                    clickListener.accept(gp);
+                } else {
+                    addMarker(gp);
+                }
             }
         });
     }
@@ -103,12 +111,43 @@ public class MapPanel extends JPanel {
             waypoints.add(new DefaultWaypoint(gp));
         }
         waypointPainter.setWaypoints(waypoints);
+        numberedMarkerPainter.setPositions(markerPositions);
         mapViewer.repaint();
     }
 
-    /**
-     * Return a copy of last two marker positions (in order: earlier, later). If fewer than 2 markers, returns an empty list.
-     */
+    public void addStop(double latitude, double longitude) {
+        GeoPosition gp = new GeoPosition(latitude, longitude);
+        markerPositions.add(gp);
+        waypoints.clear();
+        for (GeoPosition p : markerPositions) {
+            waypoints.add(new DefaultWaypoint(p));
+        }
+        waypointPainter.setWaypoints(waypoints);
+        numberedMarkerPainter.setPositions(markerPositions);
+        mapViewer.repaint();
+    }
+
+    public void setStops(List<GeoPosition> positions) {
+        markerPositions.clear();
+        if (positions != null) markerPositions.addAll(positions);
+        waypoints.clear();
+        for (GeoPosition p : markerPositions) {
+            waypoints.add(new DefaultWaypoint(p));
+        }
+        waypointPainter.setWaypoints(waypoints);
+        numberedMarkerPainter.setPositions(markerPositions);
+        mapViewer.repaint();
+    }
+
+    public void clearStops() {
+        markerPositions.clear();
+        waypoints.clear();
+        waypointPainter.setWaypoints(waypoints);
+        numberedMarkerPainter.setPositions(markerPositions);
+        clearRoute();
+        mapViewer.repaint();
+    }
+
     public List<GeoPosition> getLastTwoMarkerPositions() {
         int size = markerPositions.size();
         if (size < 2) return new ArrayList<>();
@@ -118,14 +157,24 @@ public class MapPanel extends JPanel {
     }
 
     public void setRoute(List<GeoPosition> route) {
-        // create a fresh RoutePainter for the new route to avoid analyzer issues
         this.routePainter = new RoutePainter(route);
-        compoundPainter.setPainters(Arrays.asList(routePainter, waypointPainter));
+        compoundPainter.setPainters(Arrays.asList(routePainter, waypointPainter, numberedMarkerPainter));
+        mapViewer.repaint();
+    }
+
+    public void setRouteSegments(List<List<GeoPosition>> segments) {
+        this.routePainter = new RoutePainter(null);
+        this.routePainter.setSegments(segments);
+        compoundPainter.setPainters(Arrays.asList(routePainter, waypointPainter, numberedMarkerPainter));
         mapViewer.repaint();
     }
 
     public void clearRoute() {
         setRoute(null);
+    }
+
+    public void setClickListener(Consumer<GeoPosition> listener) {
+        this.clickListener = listener;
     }
 
     public static class HttpsOsmTileFactoryInfo extends OSMTileFactoryInfo {

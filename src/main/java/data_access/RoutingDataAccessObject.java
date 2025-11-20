@@ -12,10 +12,6 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Simple routing DAO that queries a routing backend (OSRM public demo) and returns a list of GeoPosition for the route.
- * NOTE: Uses OSRM demo server for quick prototyping. For production consider OpenRouteService (API key) or self-hosted router.
- */
 public class RoutingDataAccessObject {
     private final HttpClient client;
 
@@ -23,13 +19,9 @@ public class RoutingDataAccessObject {
         this.client = client;
     }
 
-    /**
-     * Request a route between two GeoPositions using OSRM. Profile is typically "driving", "walking" or "cycling".
-     */
     public List<GeoPosition> getRoute(GeoPosition src, GeoPosition dst, String profile) throws IOException, InterruptedException {
         if (src == null || dst == null) return new ArrayList<>();
 
-        // OSRM expects lon,lat pairs
         String coords = String.format("%f,%f;%f,%f", src.getLongitude(), src.getLatitude(), dst.getLongitude(), dst.getLatitude());
         String url = "https://router.project-osrm.org/route/v1/" + profile + "/" + coords + "?overview=full&geometries=geojson";
 

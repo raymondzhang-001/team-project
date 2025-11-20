@@ -1,8 +1,5 @@
 package use_case.add_marker;
 
-/**
- * The output data for the AddMarker use case
- */
 public class AddMarkerOutputData {
     private final double latitude;
     private final double longitude;

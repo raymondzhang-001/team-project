@@ -1,8 +1,5 @@
 package interface_adapter.search;
 
-/**
- * The state for the Search Model.
- */
 public class SearchState {
     private String locationName;
     private double latitude;

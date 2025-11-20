@@ -20,12 +20,6 @@ import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * View for the Add Marker (pin) Use Case.
- * <p>
- * Displays a map and allows the user to click to add markers.
- * It listens to AddMarkerViewModel changes to update the pins.
- */
 public class AddMarkerView extends JPanel implements PropertyChangeListener {
 
     private final String viewName = "add marker";
@@ -37,13 +31,6 @@ public class AddMarkerView extends JPanel implements PropertyChangeListener {
     private final Set<Waypoint> waypoints;
     private final WaypointPainter<Waypoint> waypointPainter;
 
-    /**
-     * Constructs the AddMarkerView.
-     *
-     * @param mapViewer           the JXMapViewer instance used to display the map
-     * @param addMarkerController the controller for the Add Marker Use Case
-     * @param addMarkerViewModel  the ViewModel for the Add Marker Use Case
-     */
     public AddMarkerView(JXMapViewer mapViewer,
                          AddMarkerController addMarkerController,
                          AddMarkerViewModel addMarkerViewModel) {
@@ -54,11 +41,9 @@ public class AddMarkerView extends JPanel implements PropertyChangeListener {
         this.waypoints = new HashSet<>();
         this.waypointPainter = new WaypointPainter<>();
 
-        // Configure painter
         waypointPainter.setWaypoints(waypoints);
         mapViewer.setOverlayPainter(waypointPainter);
 
-        // Listen for state changes from the ViewModel
         this.addMarkerViewModel.addPropertyChangeListener(this);
 
         setLayout(new BorderLayout());
@@ -67,16 +52,10 @@ public class AddMarkerView extends JPanel implements PropertyChangeListener {
         setupMouseListener();
     }
 
-    /**
-     * @return the name of this view, if you use a ViewManager.
-     */
     public String getViewName() {
         return viewName;
     }
 
-    /**
-     * Reacts to changes in the AddMarkerViewModel's state.
-     */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (!"state".equals(evt.getPropertyName())) {
@@ -85,7 +64,6 @@ public class AddMarkerView extends JPanel implements PropertyChangeListener {
 
         AddMarkerState state = addMarkerViewModel.getState();
 
-        // Handle error
         if (state.getErrorMessage() != null) {
             JOptionPane.showMessageDialog(
                     this,
@@ -96,7 +74,6 @@ public class AddMarkerView extends JPanel implements PropertyChangeListener {
             return;
         }
 
-        // Handle new marker
         if (state.getLastMarkerLatitude() != null &&
                 state.getLastMarkerLongitude() != null) {
 
@@ -110,11 +87,6 @@ public class AddMarkerView extends JPanel implements PropertyChangeListener {
         }
     }
 
-    /**
-     * Adds a marker (pin) to the map and repaints.
-     *
-     * @param marker the marker to display
-     */
     private void addMarker(Marker marker) {
         GeoPosition gp = new GeoPosition(
                 marker.getLatitude(),
@@ -126,10 +98,6 @@ public class AddMarkerView extends JPanel implements PropertyChangeListener {
         mapViewer.repaint();
     }
 
-    /**
-     * Sets up mouse listening so that clicking on the map
-     * triggers the Add Marker Use Case.
-     */
     private void setupMouseListener() {
         mapViewer.addMouseListener(new MouseAdapter() {
             @Override

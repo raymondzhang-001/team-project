@@ -2,20 +2,49 @@
 <project version="4">
   <component name="AgentMigrationStateService">
     <option name="pendingSessionIds">
+      <option value="5fb27a89-3641-4303-936d-23cd1ca28668" />
       <option value="b5068681-1309-4939-9541-959cce3a5335" />
+      <option value="e84018b8-0823-4ad5-b5fc-3e212a1481fa" />
     </option>
     <option name="pendingTurns">
       <map>
+        <entry key="5fb27a89-3641-4303-936d-23cd1ca28668">
+          <value>
+            <set>
+              <option value="0fbe6a24-0d90-4242-a95c-0e0c5d3d2bf7" />
+              <option value="d3502e77-6efe-4e6f-8436-6538ca448e96" />
+              <option value="ec6a32d6-e4ed-4c15-a195-5a09505faa28" />
+            </set>
+          </value>
+        </entry>
         <entry key="b5068681-1309-4939-9541-959cce3a5335">
           <value>
             <set>
               <option value="0662b19e-7f8e-4a39-a942-0730b798d260" />
+              <option value="71faf671-7868-4df0-85d2-c4f46c058b4a" />
+            </set>
+          </value>
+        </entry>
+        <entry key="e84018b8-0823-4ad5-b5fc-3e212a1481fa">
+          <value>
+            <set>
+              <option value="282db74c-62d5-41be-a606-1568202c71e8" />
             </set>
           </value>
         </entry>
       </map>
     </option>
     <pendingWorkingSetItems>
+      <entry key="5fb27a89-3641-4303-936d-23cd1ca28668">
+        <set>
+          <option value="file://$PROJECT_DIR$/src/main/java/view/MapPanel.java" />
+          <option value="file://$PROJECT_DIR$/src/main/java/view/SearchView.java" />
+          <option value="file://$PROJECT_DIR$/src/main/java/app/AppBuilder.java" />
+          <option value="file://$PROJECT_DIR$/src/main/java/data_access/OSMDataAccessObject.java" />
+          <option value="file://$PROJECT_DIR$/src/main/java/view/RoutePainter.java" />
+          <option value="file://$PROJECT_DIR$/src/main/java/view/NumberedMarkerPainter.java" />
+        </set>
+      </entry>
       <entry key="b5068681-1309-4939-9541-959cce3a5335">
         <set>
           <option value="file://$PROJECT_DIR$/src/main/java/view/MapPanel.java" />

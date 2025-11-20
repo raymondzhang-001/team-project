@@ -3,9 +3,6 @@ package interface_adapter.addMarker;
 import use_case.add_marker.AddMarkerOutputBoundary;
 import use_case.add_marker.AddMarkerOutputData;
 
-/**
- * Presenter for the Add Marker Use Case.
- */
 public class AddMarkerPresenter implements AddMarkerOutputBoundary {
 
     private final AddMarkerViewModel addMarkerViewModel;

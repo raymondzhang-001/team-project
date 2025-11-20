@@ -15,9 +15,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.net.http.HttpClient;
 
-/**
- * Builder of the final GUI
- */
 public class AppBuilder {
 
     private final JPanel cardPanel = new JPanel();
@@ -52,8 +49,8 @@ public class AppBuilder {
         SearchController searchController = new SearchController(searchInteractor);
         searchView.setSearchController(searchController);
 
-        // provide routing DAO to the view so it can request routes
         searchView.setRoutingDataAccessObject(routingDataAccessObject);
+        searchView.setOsmDataAccessObject(osmDataAccessObject);
 
         return this;
     }
