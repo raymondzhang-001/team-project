@@ -2,13 +2,24 @@
 <project version="4">
   <component name="AgentMigrationStateService">
     <option name="pendingSessionIds">
+      <option value="5b5a5ba3-82d5-440b-b233-817d0ebede39" />
       <option value="5fb27a89-3641-4303-936d-23cd1ca28668" />
+      <option value="84056666-fb05-45d8-a817-ddb47b5c1bed" />
       <option value="b5068681-1309-4939-9541-959cce3a5335" />
       <option value="dc993dc3-f236-4644-b435-313e09d52251" />
       <option value="e84018b8-0823-4ad5-b5fc-3e212a1481fa" />
     </option>
     <option name="pendingTurns">
       <map>
+        <entry key="5b5a5ba3-82d5-440b-b233-817d0ebede39">
+          <value>
+            <set>
+              <option value="7c0ef8bd-2e49-4e2b-b3f1-9c0ad03d9b57" />
+              <option value="7ae58be2-5502-438a-b854-405845071d38" />
+              <option value="ff823af6-91c1-409f-b88c-e1e73909a4a5" />
+            </set>
+          </value>
+        </entry>
         <entry key="5fb27a89-3641-4303-936d-23cd1ca28668">
           <value>
             <set>
@@ -33,6 +44,16 @@
             </set>
           </value>
         </entry>
+        <entry key="84056666-fb05-45d8-a817-ddb47b5c1bed">
+          <value>
+            <set>
+              <option value="0a463c6e-d692-4349-8719-71779243c48a" />
+              <option value="d2f11cac-4d5b-4a95-af8d-b109dbd13a9a" />
+              <option value="540148f8-5c24-49d9-b8ed-dee2008b7f83" />
+              <option value="380af977-6558-4d2c-8f71-d00fc4be45a8" />
+            </set>
+          </value>
+        </entry>
         <entry key="b5068681-1309-4939-9541-959cce3a5335">
           <value>
             <set>
@@ -47,6 +68,11 @@
               <option value="7e981792-26dd-4734-960f-22c138cc3bdf" />
               <option value="8ee2f2b2-a919-4030-85d5-6efcb9a07edb" />
               <option value="4a32bc05-7d19-4b62-ab8e-aa61bf980be3" />
+              <option value="523414fa-7bec-4b29-a803-8ac21b276fed" />
+              <option value="4ebc4aca-fb0c-4b06-8b89-df6d1eeff2c5" />
+              <option value="6a6bb36e-e480-4b66-9b27-4ef768cdec8a" />
+              <option value="1cd8dec1-0c3a-4a45-8350-b594214cc4c4" />
+              <option value="6bbd76ff-51ab-4444-a5df-dc0fb9475fc9" />
             </set>
           </value>
         </entry>
@@ -60,6 +86,11 @@
       </map>
     </option>
     <pendingWorkingSetItems>
+      <entry key="5b5a5ba3-82d5-440b-b233-817d0ebede39">
+        <set>
+          <option value="file://$PROJECT_DIR$/src/main/java/view/MapPanel.java" />
+        </set>
+      </entry>
       <entry key="5fb27a89-3641-4303-936d-23cd1ca28668">
         <set>
           <option value="file://$PROJECT_DIR$/src/main/java/view/MapPanel.java" />
@@ -68,6 +99,11 @@
           <option value="file://$PROJECT_DIR$/src/main/java/data_access/OSMDataAccessObject.java" />
           <option value="file://$PROJECT_DIR$/src/main/java/view/RoutePainter.java" />
           <option value="file://$PROJECT_DIR$/src/main/java/view/NumberedMarkerPainter.java" />
+        </set>
+      </entry>
+      <entry key="84056666-fb05-45d8-a817-ddb47b5c1bed">
+        <set>
+          <option value="file://$PROJECT_DIR$/src/main/java/view/MapPanel.java" />
         </set>
       </entry>
       <entry key="b5068681-1309-4939-9541-959cce3a5335">
