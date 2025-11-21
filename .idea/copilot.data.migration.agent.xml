@@ -4,6 +4,7 @@
     <option name="pendingSessionIds">
       <option value="5fb27a89-3641-4303-936d-23cd1ca28668" />
       <option value="b5068681-1309-4939-9541-959cce3a5335" />
+      <option value="dc993dc3-f236-4644-b435-313e09d52251" />
       <option value="e84018b8-0823-4ad5-b5fc-3e212a1481fa" />
     </option>
     <option name="pendingTurns">
@@ -23,6 +24,12 @@
               <option value="98b285b9-798a-4b46-8c4d-bdac9edd5d10" />
               <option value="bb6d625f-72a4-4c3b-ab47-82ce62504849" />
               <option value="090139ed-95f8-42d4-a2a9-56682427d5b5" />
+              <option value="74e17be6-6d0b-4a38-809b-d439b2df76c6" />
+              <option value="ef3286f6-3d9d-464f-ae82-f215d66c932e" />
+              <option value="d9db7c6c-13e4-44e8-a069-9be566fa98a1" />
+              <option value="7e4dcd2e-a7e0-4679-ac03-210375f59bbe" />
+              <option value="e6a8a208-0580-4eeb-b1f7-4d95cb7ebb8a" />
+              <option value="310de455-824b-46fe-8e0a-48f1c3eeb46d" />
             </set>
           </value>
         </entry>
@@ -31,6 +38,14 @@
             <set>
               <option value="0662b19e-7f8e-4a39-a942-0730b798d260" />
               <option value="71faf671-7868-4df0-85d2-c4f46c058b4a" />
+            </set>
+          </value>
+        </entry>
+        <entry key="dc993dc3-f236-4644-b435-313e09d52251">
+          <value>
+            <set>
+              <option value="7e981792-26dd-4734-960f-22c138cc3bdf" />
+              <option value="8ee2f2b2-a919-4030-85d5-6efcb9a07edb" />
             </set>
           </value>
         </entry>
@@ -60,6 +75,11 @@
           <option value="file://$PROJECT_DIR$/src/main/java/data_access/RoutingDataAccessObject.java" />
           <option value="file://$PROJECT_DIR$/src/main/java/view/RoutePainter.java" />
           <option value="file://$PROJECT_DIR$/src/main/java/app/AppBuilder.java" />
+          <option value="file://$PROJECT_DIR$/src/main/java/view/SearchView.java" />
+        </set>
+      </entry>
+      <entry key="dc993dc3-f236-4644-b435-313e09d52251">
+        <set>
           <option value="file://$PROJECT_DIR$/src/main/java/view/SearchView.java" />
         </set>
       </entry>

@@ -110,18 +110,73 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         searchProgressContainer.setOpaque(false);
         searchProgressContainer.add(searchProgressLabel);
         searchProgressContainer.add(searchProgressBar);
+        // Zoom controls: left = '+' (zoom in), right = '-' (zoom out)
+        JButton leftZoomBtn = new JButton("+");
+        leftZoomBtn.setToolTipText("Zoom in");
+        leftZoomBtn.setPreferredSize(new Dimension(36, 24));
+        // Make the label unambiguous and prevent ellipsis by using a slightly larger font and tight margins
+        leftZoomBtn.setFont(leftZoomBtn.getFont().deriveFont(Font.BOLD, 14f));
+        leftZoomBtn.setMargin(new Insets(2, 4, 2, 4));
+        leftZoomBtn.setHorizontalAlignment(SwingConstants.CENTER);
+        // Left button action: ZOOM IN (explicit helper to ensure correct direction)
+        leftZoomBtn.addActionListener(evt -> {
+            try {
+                JComponent viewer = mapPanel.getMapViewer();
+                GeoPosition center = mapPanel.getMapViewer().convertPointToGeoPosition(new Point(viewer.getWidth()/2, viewer.getHeight()/2));
+                int z = mapPanel.getMapViewer().getZoom();
+                int newZ = Math.max(0, z - 1); // zoom in (decrease zoom index)
+                mapPanel.getMapViewer().setZoom(newZ);
+                mapPanel.getMapViewer().setAddressLocation(center);
+            } catch (Exception ignored) {}
+        });
+
+        JButton rightZoomBtn = new JButton("-");
+        rightZoomBtn.setToolTipText("Zoom out");
+        rightZoomBtn.setPreferredSize(new Dimension(36, 24));
+        // Ensure '-' is visible and not truncated
+        rightZoomBtn.setFont(rightZoomBtn.getFont().deriveFont(Font.BOLD, 14f));
+        rightZoomBtn.setMargin(new Insets(2, 4, 2, 4));
+        rightZoomBtn.setHorizontalAlignment(SwingConstants.CENTER);
+        // Right button action: ZOOM OUT (explicit helper to ensure correct direction)
+        rightZoomBtn.addActionListener(evt -> {
+            try {
+                JComponent viewer = mapPanel.getMapViewer();
+                GeoPosition center = mapPanel.getMapViewer().convertPointToGeoPosition(new Point(viewer.getWidth()/2, viewer.getHeight()/2));
+                int z = mapPanel.getMapViewer().getZoom();
+                int newZ = Math.min(20, z + 1); // zoom out (increase zoom index)
+                mapPanel.getMapViewer().setZoom(newZ);
+                mapPanel.getMapViewer().setAddressLocation(center);
+            } catch (Exception ignored) {}
+        });
+
+        JPanel zoomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 0));
+        zoomPanel.setOpaque(false);
+        // Force left-to-right ordering regardless of locale so left button is visually left
+        zoomPanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+        searchProgressContainer.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+
+        // Ensure labels and actions are explicit: left = '+' (zoom in), right = '-' (zoom out)
+        leftZoomBtn.setText("+");
+        rightZoomBtn.setText("-");
+
+        zoomPanel.add(leftZoomBtn); // visually left
+        zoomPanel.add(rightZoomBtn); // visually right
+        searchProgressContainer.add(zoomPanel);
         // keep the background area permanently visible, but hide the progress UI until needed
         // reserve more vertical space so the progress controls never cause layout shifts
         searchProgressContainer.setPreferredSize(new Dimension(0, 44));
         searchProgressContainer.setVisible(true);
         searchProgressLabel.setText("");
         searchProgressBar.setVisible(false);
-         this.add(searchProgressContainer, BorderLayout.NORTH);
 
+        // add the (single) search progress container to the top of the main panel
+        this.add(searchProgressContainer, BorderLayout.NORTH);
+
+        // Left panel (sidebar) with search field and action buttons
         JPanel leftPanel = new JPanel();
         leftPanel.setBackground(new Color(70,130,180)); // steel blue
         leftPanel.setLayout(new BorderLayout());
-        leftPanel.setPreferredSize(new Dimension(350, 800)); // will be approx 1/3 for common window sizes
+        leftPanel.setPreferredSize(new Dimension(350, 800)); // approx 1/3 width
 
         JPanel topSearch = new JPanel(new BorderLayout());
         topSearch.setOpaque(false);
@@ -133,7 +188,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         btns.add(routeButton);
         topSearch.add(btns, BorderLayout.EAST);
 
-        leftPanel.add(topSearch, BorderLayout.NORTH);
 
         final JPopupMenu suggestionPopup = new JPopupMenu();
         final JList<String> suggestionList = new JList<>();
