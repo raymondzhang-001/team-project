@@ -40,7 +40,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     private final List<GeoPosition> stopPositions = new ArrayList<>();
     private final List<entity.Location> currentSuggestions = new ArrayList<>();
     private boolean routeHasBeenComputed = false;
-    private final List<GeoPosition> routedStops = new ArrayList<>();  // Track the actual GeoPosition objects that were routed
+    private final List<GeoPosition> routedStops = new ArrayList<>();
 
     private final JPanel progressPanelContainer;
     private final JProgressBar rerouteProgressBar;
@@ -624,7 +624,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
                     } else {
                         mapPanel.setRouteSegments(segs);
                         routeHasBeenComputed = true;
-                        // Record which stops were routed
                         routedStops.clear();
                         routedStops.addAll(stopPositions);
                     }
@@ -671,10 +670,8 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
 
     private void computeAndDisplayRouteIfAuto() {
         if (routingDao != null && stopPositions.size() >= 2 && routeHasBeenComputed) {
-            // Filter current stops to only include those that were in the original routed set
             List<GeoPosition> stopsToRoute = new ArrayList<>();
             for (GeoPosition pos : stopPositions) {
-                // Check if this position was in the original routed stops
                 for (GeoPosition routedPos : routedStops) {
                     if (geoPositionsEqual(pos, routedPos)) {
                         stopsToRoute.add(pos);
@@ -686,7 +683,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
             if (stopsToRoute.size() >= 2) {
                 computeAndDisplayRouteForStops(stopsToRoute);
             } else {
-                // Not enough original routed stops remain
                 mapPanel.clearRoute();
             }
         } else if (stopPositions.size() < 2) {
@@ -698,7 +694,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
 
     private boolean geoPositionsEqual(GeoPosition p1, GeoPosition p2) {
         if (p1 == null || p2 == null) return false;
-        // Use a small tolerance for floating point comparison
         double tolerance = 0.000001;
         return Math.abs(p1.getLatitude() - p2.getLatitude()) < tolerance &&
                Math.abs(p1.getLongitude() - p2.getLongitude()) < tolerance;
@@ -743,12 +738,10 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
                 try {
                     List<List<org.jxmapviewer.viewer.GeoPosition>> segs = get();
                     if (segs == null || segs.isEmpty()) {
-                        // No route found, clear the route display
                     } else {
                         mapPanel.setRouteSegments(segs);
                     }
                 } catch (Exception e) {
-                    // Error occurred
                 } finally {
                     hideRerouteProgress();
                 }

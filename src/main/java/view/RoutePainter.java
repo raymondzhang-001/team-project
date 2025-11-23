@@ -51,7 +51,7 @@ public class RoutePainter implements Painter<JXMapViewer> {
         if (segments != null && !segments.isEmpty()) {
             int sCount = segments.size();
             int alphaStart = 255;
-            int alphaEnd = Math.max(1, (int) Math.round(255 * 0.40)); // opacity lower bound
+            int alphaEnd = Math.max(1, (int) Math.round(255 * 0.40));
 
             for (int si = 0; si < sCount; si++) {
                 List<GeoPosition> seg = segments.get(si);
