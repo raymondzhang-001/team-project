@@ -8,7 +8,10 @@
       <option value="5fb27a89-3641-4303-936d-23cd1ca28668" />
       <option value="84056666-fb05-45d8-a817-ddb47b5c1bed" />
       <option value="85455e1a-df86-4cda-ab17-3e35ad226e22" />
+      <option value="8ce7c811-a9e3-45af-b3b8-16be72ddaa77" />
       <option value="b5068681-1309-4939-9541-959cce3a5335" />
+      <option value="b6344923-919a-4f13-97c2-5d6b38764b02" />
+      <option value="ce1cba65-bddd-4ed9-81be-4c3e257798a6" />
       <option value="db55499c-a511-4d0b-8993-562d9bb8830e" />
       <option value="dc993dc3-f236-4644-b435-313e09d52251" />
       <option value="e84018b8-0823-4ad5-b5fc-3e212a1481fa" />
@@ -72,6 +75,16 @@
               <option value="02b278a7-9937-4277-b99f-2de5bfa8697e" />
               <option value="df921ba8-7c56-483b-8796-81b36523e8dc" />
               <option value="b1da08bf-f8fc-40c1-bf00-f7eed11e4792" />
+              <option value="5211984e-37ab-4cfa-b7da-35da140bfd6d" />
+              <option value="2af6b942-6982-4138-a525-7ec61a8b1fc7" />
+            </set>
+          </value>
+        </entry>
+        <entry key="8ce7c811-a9e3-45af-b3b8-16be72ddaa77">
+          <value>
+            <set>
+              <option value="0534a2bf-84d9-408e-b006-c787eabd2bba" />
+              <option value="e668c41a-68bf-485f-9150-ec9bb6876497" />
             </set>
           </value>
         </entry>
@@ -80,6 +93,20 @@
             <set>
               <option value="0662b19e-7f8e-4a39-a942-0730b798d260" />
               <option value="71faf671-7868-4df0-85d2-c4f46c058b4a" />
+            </set>
+          </value>
+        </entry>
+        <entry key="b6344923-919a-4f13-97c2-5d6b38764b02">
+          <value>
+            <set>
+              <option value="9577126a-ffc0-4814-a447-c874424b9bab" />
+            </set>
+          </value>
+        </entry>
+        <entry key="ce1cba65-bddd-4ed9-81be-4c3e257798a6">
+          <value>
+            <set>
+              <option value="180b7021-d60c-4a88-b47e-4a1127d255cb" />
             </set>
           </value>
         </entry>
@@ -126,7 +153,18 @@
           <option value="file://$PROJECT_DIR$/CURSOR_BASED_ZOOM.md" />
         </set>
       </entry>
+      <entry key="8ce7c811-a9e3-45af-b3b8-16be72ddaa77">
+        <set>
+          <option value="file://$PROJECT_DIR$/src/main/java/view/SearchView.java" />
+          <option value="file://$PROJECT_DIR$/ROUTE_RECOMPUTE_BUG_FIX.md" />
+        </set>
+      </entry>
       <entry key="b5068681-1309-4939-9541-959cce3a5335" />
+      <entry key="b6344923-919a-4f13-97c2-5d6b38764b02">
+        <set>
+          <option value="file://$PROJECT_DIR$/src/main/java/view/SearchView.java" />
+        </set>
+      </entry>
       <entry key="db55499c-a511-4d0b-8993-562d9bb8830e">
         <set>
           <option value="file://$PROJECT_DIR$/src/main/java/view/MapPanel.java" />

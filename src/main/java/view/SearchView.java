@@ -39,6 +39,8 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     private final JList<String> stopsList = new JList<>(stopsListModel);
     private final List<GeoPosition> stopPositions = new ArrayList<>();
     private final List<entity.Location> currentSuggestions = new ArrayList<>();
+    private boolean routeHasBeenComputed = false;
+    private final List<GeoPosition> routedStops = new ArrayList<>();  // Track the actual GeoPosition objects that were routed
 
     private final JPanel progressPanelContainer;
     private final JProgressBar rerouteProgressBar;
@@ -621,6 +623,10 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
                         JOptionPane.showMessageDialog(SearchView.this, "No route found.");
                     } else {
                         mapPanel.setRouteSegments(segs);
+                        routeHasBeenComputed = true;
+                        // Record which stops were routed
+                        routedStops.clear();
+                        routedStops.addAll(stopPositions);
                     }
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(SearchView.this, "Routing error: " + e.getMessage());
@@ -664,11 +670,91 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     }
 
     private void computeAndDisplayRouteIfAuto() {
-        if (routingDao != null && stopPositions.size() >= 2) {
-            computeAndDisplayRoute();
+        if (routingDao != null && stopPositions.size() >= 2 && routeHasBeenComputed) {
+            // Filter current stops to only include those that were in the original routed set
+            List<GeoPosition> stopsToRoute = new ArrayList<>();
+            for (GeoPosition pos : stopPositions) {
+                // Check if this position was in the original routed stops
+                for (GeoPosition routedPos : routedStops) {
+                    if (geoPositionsEqual(pos, routedPos)) {
+                        stopsToRoute.add(pos);
+                        break;
+                    }
+                }
+            }
+
+            if (stopsToRoute.size() >= 2) {
+                computeAndDisplayRouteForStops(stopsToRoute);
+            } else {
+                // Not enough original routed stops remain
+                mapPanel.clearRoute();
+            }
         } else if (stopPositions.size() < 2) {
             mapPanel.clearRoute();
+            routeHasBeenComputed = false;
+            routedStops.clear();
         }
+    }
+
+    private boolean geoPositionsEqual(GeoPosition p1, GeoPosition p2) {
+        if (p1 == null || p2 == null) return false;
+        // Use a small tolerance for floating point comparison
+        double tolerance = 0.000001;
+        return Math.abs(p1.getLatitude() - p2.getLatitude()) < tolerance &&
+               Math.abs(p1.getLongitude() - p2.getLongitude()) < tolerance;
+    }
+
+    private void computeAndDisplayRouteForStops(List<GeoPosition> stops) {
+        if (routingDao == null || stops.size() < 2) {
+            return;
+        }
+
+        showRerouteProgress();
+
+        SwingWorker<List<List<org.jxmapviewer.viewer.GeoPosition>>, Void> worker = new SwingWorker<>() {
+            @Override
+            protected List<List<org.jxmapviewer.viewer.GeoPosition>> doInBackground() throws Exception {
+                List<List<org.jxmapviewer.viewer.GeoPosition>> segments = new ArrayList<>();
+                for (int i = 0; i < stops.size() - 1; i++) {
+                    org.jxmapviewer.viewer.GeoPosition a = stops.get(i);
+                    org.jxmapviewer.viewer.GeoPosition b = stops.get(i + 1);
+                    try {
+                        List<org.jxmapviewer.viewer.GeoPosition> segment = routingDao.getRoute(a, b, "walking");
+                        if (segment != null && !segment.isEmpty()) {
+                            segments.add(segment);
+                        } else {
+                            List<org.jxmapviewer.viewer.GeoPosition> straight = new ArrayList<>();
+                            straight.add(a);
+                            straight.add(b);
+                            segments.add(straight);
+                        }
+                    } catch (Exception e) {
+                        List<org.jxmapviewer.viewer.GeoPosition> straight = new ArrayList<>();
+                        straight.add(a);
+                        straight.add(b);
+                        segments.add(straight);
+                    }
+                }
+                return segments;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    List<List<org.jxmapviewer.viewer.GeoPosition>> segs = get();
+                    if (segs == null || segs.isEmpty()) {
+                        // No route found, clear the route display
+                    } else {
+                        mapPanel.setRouteSegments(segs);
+                    }
+                } catch (Exception e) {
+                    // Error occurred
+                } finally {
+                    hideRerouteProgress();
+                }
+            }
+        };
+        worker.execute();
     }
 
     private void clearAllStopsAndRoutes() {
@@ -680,6 +766,8 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         searchInputField.setText("");
 
         currentSuggestions.clear();
+        routeHasBeenComputed = false;
+        routedStops.clear();
     }
 
     public void actionPerformed(ActionEvent evt) {
