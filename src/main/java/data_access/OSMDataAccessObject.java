@@ -38,12 +38,10 @@ public class OSMDataAccessObject implements SearchDataAccessInterface {
 
     @Override
     public void save(Location location) {
-        // TODO document why this method is empty
     }
 
     @Override
     public void setCurrentLocation(String locationName) {
-        // TODO document why this method is empty
     }
 
     @Override
