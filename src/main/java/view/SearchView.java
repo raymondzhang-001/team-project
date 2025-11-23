@@ -40,22 +40,17 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     private final List<GeoPosition> stopPositions = new ArrayList<>();
     private final List<entity.Location> currentSuggestions = new ArrayList<>();
 
-    // progress UI for rerouting
-    private final JPanel progressPanelContainer; // hold in bottom-right
+    private final JPanel progressPanelContainer;
     private final JProgressBar rerouteProgressBar;
     private final JLabel rerouteLabel;
     private javax.swing.Timer progressTimer;
     private int fakeProgress = 0;
 
-    // search suggestions progress UI (top-right)
     private final JPanel searchProgressContainer;
     private final JLabel searchProgressLabel;
     private final JProgressBar searchProgressBar;
     private SwingWorker<List<entity.Location>, Void> suggestionWorker = null;
 
-    /**
-     * Construct the SearchView JPanel from its SearchViewModel (contain states of the search view)
-     */
     public SearchView(SearchViewModel searchViewModel) {
         this.viewName = searchViewModel.getViewName();
         searchViewModel.addPropertyChangeListener(this);
@@ -100,7 +95,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
 
         this.setLayout(new BorderLayout());
 
-        // create top-right search suggestions progress container (hidden by default)
         searchProgressLabel = new JLabel("Searching the area...");
         searchProgressLabel.setFont(searchProgressLabel.getFont().deriveFont(Font.PLAIN, 12f));
         searchProgressBar = new JProgressBar();
@@ -110,21 +104,18 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         searchProgressContainer.setOpaque(false);
         searchProgressContainer.add(searchProgressLabel);
         searchProgressContainer.add(searchProgressBar);
-        // Zoom controls: left = '+' (zoom in), right = '-' (zoom out)
         JButton leftZoomBtn = new JButton("+");
         leftZoomBtn.setToolTipText("Zoom in");
         leftZoomBtn.setPreferredSize(new Dimension(36, 24));
-        // Make the label unambiguous and prevent ellipsis by using a slightly larger font and tight margins
         leftZoomBtn.setFont(leftZoomBtn.getFont().deriveFont(Font.BOLD, 14f));
         leftZoomBtn.setMargin(new Insets(2, 4, 2, 4));
         leftZoomBtn.setHorizontalAlignment(SwingConstants.CENTER);
-        // Left button action: ZOOM IN (explicit helper to ensure correct direction)
         leftZoomBtn.addActionListener(evt -> {
             try {
                 JComponent viewer = mapPanel.getMapViewer();
                 GeoPosition center = mapPanel.getMapViewer().convertPointToGeoPosition(new Point(viewer.getWidth()/2, viewer.getHeight()/2));
                 int z = mapPanel.getMapViewer().getZoom();
-                int newZ = Math.max(0, z - 1); // zoom in (decrease zoom index)
+                int newZ = Math.max(0, z - 1);
                 mapPanel.getMapViewer().setZoom(newZ);
                 mapPanel.getMapViewer().setAddressLocation(center);
             } catch (Exception ignored) {}
@@ -133,17 +124,15 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         JButton rightZoomBtn = new JButton("-");
         rightZoomBtn.setToolTipText("Zoom out");
         rightZoomBtn.setPreferredSize(new Dimension(36, 24));
-        // Ensure '-' is visible and not truncated
         rightZoomBtn.setFont(rightZoomBtn.getFont().deriveFont(Font.BOLD, 14f));
         rightZoomBtn.setMargin(new Insets(2, 4, 2, 4));
         rightZoomBtn.setHorizontalAlignment(SwingConstants.CENTER);
-        // Right button action: ZOOM OUT (explicit helper to ensure correct direction)
         rightZoomBtn.addActionListener(evt -> {
             try {
                 JComponent viewer = mapPanel.getMapViewer();
                 GeoPosition center = mapPanel.getMapViewer().convertPointToGeoPosition(new Point(viewer.getWidth()/2, viewer.getHeight()/2));
                 int z = mapPanel.getMapViewer().getZoom();
-                int newZ = Math.min(20, z + 1); // zoom out (increase zoom index)
+                int newZ = Math.min(20, z + 1);
                 mapPanel.getMapViewer().setZoom(newZ);
                 mapPanel.getMapViewer().setAddressLocation(center);
             } catch (Exception ignored) {}
@@ -151,32 +140,29 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
 
         JPanel zoomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 0));
         zoomPanel.setOpaque(false);
-        // Force left-to-right ordering regardless of locale so left button is visually left
         zoomPanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
         searchProgressContainer.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
 
-        // Ensure labels and actions are explicit: left = '+' (zoom in), right = '-' (zoom out)
         leftZoomBtn.setText("+");
         rightZoomBtn.setText("-");
 
-        zoomPanel.add(leftZoomBtn); // visually left
-        zoomPanel.add(rightZoomBtn); // visually right
+        zoomPanel.add(leftZoomBtn);
+        zoomPanel.add(rightZoomBtn);
         searchProgressContainer.add(zoomPanel);
-        // keep the background area permanently visible, but hide the progress UI until needed
-        // reserve more vertical space so the progress controls never cause layout shifts
+
         searchProgressContainer.setPreferredSize(new Dimension(0, 44));
         searchProgressContainer.setVisible(true);
         searchProgressLabel.setText("");
         searchProgressBar.setVisible(false);
 
-        // add the (single) search progress container to the top of the main panel
+
         this.add(searchProgressContainer, BorderLayout.NORTH);
 
-        // Left panel (sidebar) with search field and action buttons
+
         JPanel leftPanel = new JPanel();
-        leftPanel.setBackground(new Color(70,130,180)); // steel blue
+        leftPanel.setBackground(new Color(70,130,180));
         leftPanel.setLayout(new BorderLayout());
-        leftPanel.setPreferredSize(new Dimension(350, 800)); // approx 1/3 width
+        leftPanel.setPreferredSize(new Dimension(350, 800));
 
         JPanel topSearch = new JPanel(new BorderLayout());
         topSearch.setOpaque(false);
@@ -187,7 +173,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         btns.add(search);
         btns.add(routeButton);
         topSearch.add(btns, BorderLayout.EAST);
-
 
         final JPopupMenu suggestionPopup = new JPopupMenu();
         final JList<String> suggestionList = new JList<>();
@@ -227,9 +212,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
             }
         });
 
-        // Ensure Enter while typing in the search field reliably triggers the Search action
         searchInputField.addActionListener(evt -> {
-            // If suggestion list has focus, let its Enter handler handle selection; otherwise trigger search
             if (suggestionList.isFocusOwner()) return;
             search.doClick();
         });
@@ -250,12 +233,10 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
                 double minLon = lon - delta;
                 double maxLon = lon + delta;
 
-                // cancel previous suggestion worker if running
                 if (suggestionWorker != null && !suggestionWorker.isDone()) {
                     suggestionWorker.cancel(true);
                 }
 
-                // show search progress UI
                 SwingUtilities.invokeLater(() -> {
                     searchProgressLabel.setText("Searching the area...");
                     searchProgressBar.setVisible(true);
@@ -316,10 +297,8 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
 
         leftPanel.add(topSearch, BorderLayout.NORTH);
 
-        // stops list center
         stopsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         stopsList.setBackground(new Color(220, 235, 245));
-        // custom renderer to show number to the left of each name and draw connecting lines
         stopsList.setCellRenderer(new ListCellRenderer<String>() {
             private final Font font = new JLabel().getFont().deriveFont(14f);
 
@@ -330,7 +309,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
 
                 public CellPanel() {
                     setOpaque(true);
-                    setPreferredSize(new Dimension(0, 52)); // increase vertical spacing
+                    setPreferredSize(new Dimension(0, 52));
                 }
 
                 public void setData(String name, int index, boolean isSelected) {
@@ -349,20 +328,17 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
                     int w = getWidth();
                     int h = getHeight();
 
-                    // badge parameters
                     int radius = 14;
                     int badgeX = 12;
                     int centerX = badgeX + radius;
                     int centerY = h / 2;
 
-                    // draw connecting lines (top and bottom) with route color and per-segment alpha
                     int n = stopsListModel.getSize();
                     int segments = Math.max(0, n - 1);
                     Color routeColor = new Color(0, 120, 255);
 
-                    // draw top connector (connect previous to this)
                     if (index > 0 && segments > 0) {
-                        int segIndex = index - 1; // segment between index-1 and index
+                        int segIndex = index - 1;
                         float t = (segments == 1) ? 0f : ((float) segIndex) / (float) (segments - 1);
                         int alphaStart = 255;
                         int alphaEnd = Math.max(1, (int) Math.round(255 * 0.30));
@@ -373,9 +349,8 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
                         g2.drawLine(centerX, 0, centerX, centerY - radius);
                     }
 
-                    // draw bottom connector (connect this to next)
                     if (index < n - 1 && segments > 0) {
-                        int segIndex = index; // segment between index and index+1
+                        int segIndex = index;
                         float t = (segments == 1) ? 0f : ((float) segIndex) / (float) (segments - 1);
                         int alphaStart = 255;
                         int alphaEnd = Math.max(1, (int) Math.round(255 * 0.30));
@@ -386,7 +361,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
                         g2.drawLine(centerX, centerY + radius, centerX, h);
                     }
 
-                    // draw badge (dark background)
                     int bx = badgeX;
                     int by = centerY - radius;
                     g2.setColor(new Color(100, 100, 140));
@@ -395,7 +369,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
                     g2.setStroke(new BasicStroke(2f));
                     g2.drawOval(bx, by, radius * 2, radius * 2);
 
-                    // draw number
                     String num = String.valueOf(index + 1);
                     g2.setFont(font);
                     FontMetrics fm = g2.getFontMetrics();
@@ -404,7 +377,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
                     g2.setColor(Color.WHITE);
                     g2.drawString(num, tx, ty);
 
-                    // draw name text
                     g2.setColor(Color.DARK_GRAY);
                     int nameX = bx + radius * 2 + 12;
                     int nameY = centerY + fm.getAscent() / 2 - 2;
@@ -445,7 +417,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         split.setOneTouchExpandable(true);
         this.add(split, BorderLayout.CENTER);
 
-        // create the bottom-right progress panel but keep it hidden until rerouting
          JPanel progressBox = new JPanel();
          progressBox.setLayout(new BoxLayout(progressBox, BoxLayout.Y_AXIS));
          progressBox.setBorder(BorderFactory.createCompoundBorder(
@@ -467,11 +438,16 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         rerouteProgressBar.setStringPainted(false);
         progressBox.add(rerouteProgressBar);
 
+        JButton startNewMapButton = new JButton("Start new map");
+        startNewMapButton.setToolTipText("Clear all stops and routes to start over");
+        startNewMapButton.setPreferredSize(new Dimension(120, 34));
+        startNewMapButton.setFont(startNewMapButton.getFont().deriveFont(Font.PLAIN, 12f));
+        startNewMapButton.addActionListener(e -> clearAllStopsAndRoutes());
+
         progressPanelContainer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 16, 8));
         progressPanelContainer.setOpaque(false);
         progressPanelContainer.add(progressBox);
-        // keep the background area permanently visible; show/hide only the bar and label text
-        // reserve a slightly taller bottom area to fit the reroute progress comfortably
+        progressPanelContainer.add(startNewMapButton);
         progressPanelContainer.setPreferredSize(new Dimension(0, 72));
         progressPanelContainer.setVisible(true);
          rerouteLabel.setText("");
@@ -479,18 +455,14 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
 
          this.add(progressPanelContainer, BorderLayout.SOUTH);
 
-        // Ensure layered and map have bounds immediately after construction so the map shows
         SwingUtilities.invokeLater(() -> {
             Dimension size = rightPanel.getSize();
             if (size.width == 0 || size.height == 0) {
-                // if not yet laid out, use a reasonable default based on split divider and current frame
-                // fall back to 800x600 if nothing else available
                 size = new Dimension(Math.max(800 - 350, 400), 600);
             }
             mapPanel.setBounds(0, 0, size.width, size.height);
         });
 
-        // reposition map and overlay when the layered container is resized
         rightPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
@@ -499,37 +471,28 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
             }
         });
 
-        // wire up actions
         up.addActionListener(e -> moveSelected(-1));
         down.addActionListener(e -> moveSelected(1));
         remove.addActionListener(e -> removeSelected());
 
-        // Key bindings:
-        // Global Enter: if search field has focus -> trigger search, otherwise trigger route
         this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "globalEnter");
         this.getActionMap().put("globalEnter", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // If the search input has focus, act as Search.
                 if (searchInputField.isFocusOwner()) {
                     search.doClick();
                     return;
                 }
-                // If suggestion popup is visible or suggestion list has focus, let its Enter handling run.
                 if (suggestionPopup != null && suggestionPopup.isVisible()) {
-                    // do nothing here so the suggestionList's Enter handler can run
                     return;
                 }
                 if (suggestionList != null && suggestionList.isFocusOwner()) {
-                    // allow suggestionList's own Enter action to process
                     return;
                 }
-                // Otherwise, emulate Route button
                 routeButton.doClick();
              }
          });
 
-        // List-specific keys when the stops list has focus
         InputMap listIm = stopsList.getInputMap(JComponent.WHEN_FOCUSED);
         ActionMap listAm = stopsList.getActionMap();
         listIm.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "listUp");
@@ -584,10 +547,8 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
             rerouteProgressBar.setValue(0);
             rerouteProgressBar.setVisible(true);
             rerouteLabel.setText("Rerouting...");
-             // start a timer to increment progress up to 95% while real work is running
              if (progressTimer != null && progressTimer.isRunning()) progressTimer.stop();
              progressTimer = new javax.swing.Timer(120, e -> {
-                 // increase by small random-ish increments to look natural
                  int add = 3 + (int) (Math.random() * 6);
                  fakeProgress = Math.min(95, fakeProgress + add);
                  rerouteProgressBar.setValue(fakeProgress);
@@ -598,12 +559,10 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
 
      private void hideRerouteProgress() {
          SwingUtilities.invokeLater(() -> {
-             // stop timer and set to complete, then hide after a short delay
              if (progressTimer != null) {
                  progressTimer.stop();
              }
             rerouteProgressBar.setValue(100);
-            // hide the progress bar and label, but keep the background area visible
             javax.swing.Timer t = new javax.swing.Timer(300, e -> {
                 rerouteProgressBar.setVisible(false);
                 rerouteLabel.setText("");
@@ -620,16 +579,13 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
             return;
         }
 
-        // Need at least two stops to route through
         if (stopPositions.size() < 2) {
             JOptionPane.showMessageDialog(this, "Add at least two stops to compute a full route.");
             return;
         }
 
-        // show progress UI
         showRerouteProgress();
 
-        // Compute route segments between successive stops and pass segments to map so painter can render per-segment opacity
         SwingWorker<List<List<org.jxmapviewer.viewer.GeoPosition>>, Void> worker = new SwingWorker<>() {
             @Override
             protected List<List<org.jxmapviewer.viewer.GeoPosition>> doInBackground() throws Exception {
@@ -669,7 +625,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(SearchView.this, "Routing error: " + e.getMessage());
                 } finally {
-                    // always hide progress when the worker finishes
                     hideRerouteProgress();
                 }
             }
@@ -714,6 +669,17 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         } else if (stopPositions.size() < 2) {
             mapPanel.clearRoute();
         }
+    }
+
+    private void clearAllStopsAndRoutes() {
+        stopsListModel.clear();
+        stopPositions.clear();
+
+        mapPanel.clearStops();
+
+        searchInputField.setText("");
+
+        currentSuggestions.clear();
     }
 
     public void actionPerformed(ActionEvent evt) {

@@ -69,6 +69,9 @@
           <value>
             <set>
               <option value="e2198d4b-979a-4d89-a013-4bac6ffc5cc9" />
+              <option value="02b278a7-9937-4277-b99f-2de5bfa8697e" />
+              <option value="df921ba8-7c56-483b-8796-81b36523e8dc" />
+              <option value="b1da08bf-f8fc-40c1-bf00-f7eed11e4792" />
             </set>
           </value>
         </entry>
@@ -118,6 +121,9 @@
         <set>
           <option value="file://$PROJECT_DIR$/src/main/java/view/MapPanel.java" />
           <option value="file://$PROJECT_DIR$/MOUSE_WHEEL_CHANGES.md" />
+          <option value="file://$PROJECT_DIR$/src/main/java/view/SearchView.java" />
+          <option value="file://$PROJECT_DIR$/START_NEW_MAP_BUTTON.md" />
+          <option value="file://$PROJECT_DIR$/CURSOR_BASED_ZOOM.md" />
         </set>
       </entry>
       <entry key="b5068681-1309-4939-9541-959cce3a5335" />

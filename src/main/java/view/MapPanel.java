@@ -47,19 +47,16 @@ public class MapPanel extends JPanel {
 
     private Consumer<GeoPosition> clickListener = null;
 
-    // Smooth interaction state for trackpad gestures
-    private double zoomLevelDouble = 0.0; // fractional zoom accumulator
-    private double panOffsetX = 0.0; // fractional pixel offsets accumulated for pan
+    private double zoomLevelDouble = 0.0;
+    private double panOffsetX = 0.0;
     private double panOffsetY = 0.0;
 
-    // Pinch-to-zoom detection
     private double lastWheelRotation = 0.0;
     private long lastWheelTime = 0L;
     private int consecutiveSmallRotations = 0;
-    private int consecutiveSameDirection = 0; // Track scroll consistency
-    private double totalScrollMagnitude = 0.0; // Track if we're in a scroll session
+    private int consecutiveSameDirection = 0;
+    private double totalScrollMagnitude = 0.0;
 
-    // Track last scroll event for horizontal/vertical detection
     private double pendingHorizontalScroll = 0.0;
     private long lastScrollEventTime = 0L;
     private long pinchSessionExpiry = 0L;
@@ -77,63 +74,47 @@ public class MapPanel extends JPanel {
         mapViewer.setAddressLocation(new GeoPosition(43.6532, -79.3832));
         mapViewer.setZoom(5);
 
-        // Remove default wheel listeners so we have full control over zoom/pan behavior
         for (MouseWheelListener listener : mapViewer.getMouseWheelListeners()) {
             mapViewer.removeMouseWheelListener(listener);
         }
 
-        // initialize smooth zoom state
         zoomLevelDouble = mapViewer.getZoom();
 
-        // Install global event listener to capture horizontal scroll events
-        // This runs before the mouse wheel listener and extracts horizontal scroll data
         Toolkit.getDefaultToolkit().addAWTEventListener(event -> {
             if (event instanceof MouseWheelEvent) {
                 MouseWheelEvent mwe = (MouseWheelEvent) event;
                 if (mwe.getComponent() == mapViewer || SwingUtilities.isDescendingFrom(mwe.getComponent(), mapViewer)) {
-                    // Try to extract horizontal scroll using reflection
-                    // On macOS and some Windows trackpads, this information may be available
                     try {
-                        // Check for horizontal wheel rotation (platform-specific)
                         java.lang.reflect.Field field = mwe.getClass().getDeclaredField("isHorizontal");
                         field.setAccessible(true);
                         Boolean isHorizontal = (Boolean) field.get(mwe);
 
                         if (Boolean.TRUE.equals(isHorizontal)) {
-                            // This is a horizontal scroll event
                             pendingHorizontalScroll = mwe.getPreciseWheelRotation();
                             lastScrollEventTime = System.currentTimeMillis();
                         } else {
-                            // Clear horizontal scroll if this is vertical
                             if (System.currentTimeMillis() - lastScrollEventTime > 50) {
                                 pendingHorizontalScroll = 0.0;
                             }
                         }
                     } catch (Exception ignored) {
-                        // Field doesn't exist - try alternative approach
-                        // Some JVMs might have different field names
                     }
                 }
             }
         }, AWTEvent.MOUSE_WHEEL_EVENT_MASK);
 
-        // Mouse wheel handling with proper trackpad gesture detection
         mapViewer.addMouseWheelListener(e -> {
             try {
-                double precise = e.getPreciseWheelRotation(); // fractional on touchpads
-                int wheelRot = e.getWheelRotation(); // integer notches for mouse
+                double precise = e.getPreciseWheelRotation();
+                int wheelRot = e.getWheelRotation();
                 if (precise == 0.0 && wheelRot == 0) return;
 
                 long now = System.currentTimeMillis();
 
-                // Detect gesture type: pinch vs scroll
-                // CRITICAL: Continuous scrolling in one direction must NEVER trigger zoom
-                // Pinch gestures alternate or have no clear direction
                 boolean isPinchZoom = false;
 
                 long timeDelta = now - lastWheelTime;
 
-                // Reset tracking if gesture paused
                 if (timeDelta > 200) {
                     consecutiveSmallRotations = 0;
                     consecutiveSameDirection = 0;
@@ -141,31 +122,25 @@ public class MapPanel extends JPanel {
                     pinchSessionExpiry = 0L;
                 }
 
-                // First, check if this looks like directional scrolling
                 boolean isDirectionalScroll = false;
                 if (timeDelta < 100 && Math.abs(precise) > 0.001) {
                     if (Math.signum(precise) == Math.signum(lastWheelRotation)) {
                         consecutiveSameDirection++;
                         totalScrollMagnitude += Math.abs(precise);
 
-                        // CRITICAL: Even 2 events in same direction means scrolling, not pinch
-                        // Rapid continuous scrolling in one direction must be detected immediately
                         if (consecutiveSameDirection >= 2) {
                             isDirectionalScroll = true;
                         }
                     } else {
-                        // Direction changed
                         consecutiveSameDirection = 0;
                         totalScrollMagnitude = Math.abs(precise);
                     }
                 }
 
-                // If we detected directional scrolling, absolutely block pinch zoom
                 if (isDirectionalScroll) {
                     isPinchZoom = false;
                     consecutiveSmallRotations = 0; // Reset pinch counter
                 }
-                // Only evaluate pinch conditions if NO directional scroll detected
                 else if (timeDelta < PINCH_TIME_WINDOW_MS * 2 && Math.abs(precise) > 0.001) {
                     boolean alternatingDirection = Math.signum(precise) != Math.signum(lastWheelRotation)
                             && Math.abs(lastWheelRotation) > 0.0;
@@ -185,14 +160,12 @@ public class MapPanel extends JPanel {
                 }
 
                 if (!isPinchZoom && pinchSessionExpiry > now) {
-                    // Within an active pinch session, treat additional precise events as pinch even if direction repeats
                     isPinchZoom = true;
                 }
 
                 lastWheelRotation = precise;
                 lastWheelTime = now;
 
-                // Hardware mouse wheel detection: tighter heuristics so trackpads never fall through
                 double rotationDiff = Math.abs(Math.abs(precise) - Math.abs(wheelRot));
                 boolean precisionSuggestsTrackpad = rotationDiff > 0.001 || Math.abs(precise) < 0.75;
                 boolean frequencySuggestsTrackpad = timeDelta > 0 && timeDelta < 35 && Math.abs(precise) <= 1.5;
@@ -200,21 +173,16 @@ public class MapPanel extends JPanel {
                 boolean isLikelyTrackpad = precisionSuggestsTrackpad || frequencySuggestsTrackpad || zeroRotationButPrecise;
                 boolean isHardwareWheel = !isLikelyTrackpad && Math.abs(wheelRot) >= 1;
 
-                // Determine if this is a zoom gesture
                 boolean shouldZoom = e.isControlDown() || isPinchZoom || isHardwareWheel;
 
                 if (shouldZoom) {
-                    // ZOOM: Smaller increments for smoother pinch-to-zoom
                     double deltaUnits;
                     if (isHardwareWheel) {
-                        // Hardware mouse wheel: larger steps, zoom only (no pan)
                         deltaUnits = wheelRot * HARDWARE_WHEEL_STEP;
-                        // Reset all pan offsets to prevent any panning during hardware wheel scroll
                         panOffsetX = 0.0;
                         panOffsetY = 0.0;
                         pendingHorizontalScroll = 0.0;
                     } else {
-                        // Trackpad pinch: multiple micro steps for ultra-smooth zooming
                         double perStep = precise * TRACKPAD_PINCH_STEP;
                         deltaUnits = perStep * PINCH_STEPS_PER_EVENT;
                     }
@@ -224,40 +192,54 @@ public class MapPanel extends JPanel {
 
                     int targetInt = (int) Math.round(zoomLevelDouble);
                     if (targetInt != mapViewer.getZoom()) {
-                        GeoPosition center = mapViewer.getAddressLocation();
-                        mapViewer.setZoom(targetInt);
-                        mapViewer.setAddressLocation(center);
+                        Point mousePos = e.getPoint();
+                        GeoPosition geoAtMouse = mapViewer.convertPointToGeoPosition(mousePos);
+
+                        if (geoAtMouse != null) {
+                            mapViewer.setZoom(targetInt);
+                            java.awt.geom.Point2D newMouseScreenPos2D = mapViewer.convertGeoPositionToPoint(geoAtMouse);
+
+                            if (newMouseScreenPos2D != null) {
+                                Point newMouseScreenPos = new Point((int) newMouseScreenPos2D.getX(), (int) newMouseScreenPos2D.getY());
+                                int dx = mousePos.x - newMouseScreenPos.x;
+                                int dy = mousePos.y - newMouseScreenPos.y;
+
+
+                                Point centerP = new Point(mapViewer.getWidth() / 2, mapViewer.getHeight() / 2);
+                                int targetX = centerP.x + dx;
+                                int targetY = centerP.y + dy;
+
+                                GeoPosition newCenter = mapViewer.convertPointToGeoPosition(new Point(targetX, targetY));
+                                if (newCenter != null) {
+                                    mapViewer.setAddressLocation(newCenter);
+                                }
+                            }
+                        }
                     }
-                } else if (!isHardwareWheel) {  // Only pan if NOT hardware wheel
-                    // PAN: Two-finger scroll in any direction
-                    final double PAN_SENSITIVITY = 35.0; // pixels per rotation unit
+                } else if (!isHardwareWheel) {
+
+                    final double PAN_SENSITIVITY = 35.0;
 
                     double scrollDeltaX = 0.0;
                     double scrollDeltaY = 0.0;
 
-                    // Check if we have pending horizontal scroll data from AWTEventListener
                     long now2 = System.currentTimeMillis();
                     if (now2 - lastScrollEventTime < 100 && Math.abs(pendingHorizontalScroll) > 0.001) {
-                        // We have horizontal scroll data
                         scrollDeltaX = pendingHorizontalScroll * PAN_SENSITIVITY;
-                        scrollDeltaY = 0.0; // Horizontal scroll event only
-                        pendingHorizontalScroll = 0.0; // Consume it
+                        scrollDeltaY = 0.0;
+                        pendingHorizontalScroll = 0.0;
                     } else if (e.isShiftDown()) {
-                        // Shift modifier: treat vertical scroll as horizontal pan (fallback)
                         scrollDeltaX = precise * PAN_SENSITIVITY;
                         scrollDeltaY = 0.0;
                     } else {
-                        // Normal vertical scroll
                         scrollDeltaX = 0.0;
                         scrollDeltaY = precise * PAN_SENSITIVITY;
                     }
 
-                    // Accumulate the scroll deltas for smooth diagonal panning
-                    // If both X and Y are non-zero, we get diagonal movement
                     panOffsetX += scrollDeltaX;
                     panOffsetY += scrollDeltaY;
 
-                    final double APPLY_THRESH = 1.0; // pixels
+                    final double APPLY_THRESH = 1.0;
                     if (Math.abs(panOffsetX) >= APPLY_THRESH || Math.abs(panOffsetY) >= APPLY_THRESH) {
                         Point centerP = new Point(mapViewer.getWidth()/2, mapViewer.getHeight()/2);
                         int targetX = (int) Math.round(centerP.x + panOffsetX);

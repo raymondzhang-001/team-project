@@ -7,7 +7,6 @@ public class AddMarkerState {
     private String errorMessage;
 
     public AddMarkerState() {
-        // start with no marker and no error
     }
 
     public Double getLastMarkerLatitude() {

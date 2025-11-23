@@ -22,7 +22,6 @@ public class SearchInteractor implements SearchInputBoundary {
                 searchPresenter.prepareFailView(locationName + ": Location does not exist.");
             }
             else {
-                // get location data from OSM
                 final Location location = searchDataAccessObj.get(searchInputData.getLocationName());
 
                 final SearchOutputData searchOutputData = new SearchOutputData(location.getName(),
