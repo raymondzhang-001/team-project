@@ -1,7 +1,6 @@
 package interface_adapter.search;
 
 import use_case.search.SearchOutputBoundary;
-import use_case.search.SearchOutputData;
 
 /**
  * The Presenter for the Search Use Case.
