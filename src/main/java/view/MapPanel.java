@@ -61,6 +61,10 @@ public class MapPanel extends JPanel {
     private long lastScrollEventTime = 0L;
     private long pinchSessionExpiry = 0L;
 
+    // Debounce rapid clicks to prevent duplicate markers
+    private long lastMarkerClickTime = 0L;
+    private static final long MARKER_CLICK_DEBOUNCE_MS = 500L;
+
     public MapPanel() {
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(800, 600));
@@ -360,15 +364,33 @@ public class MapPanel extends JPanel {
         mapViewer.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                long currentTime = System.currentTimeMillis();
+                // Debounce: ignore clicks within 500ms of the last one
+                if (currentTime - lastMarkerClickTime < MARKER_CLICK_DEBOUNCE_MS) {
+                    e.consume();
+                    return;
+                }
+                lastMarkerClickTime = currentTime;
+
                 GeoPosition gp = mapViewer.convertPointToGeoPosition(e.getPoint());
+                if (gp == null) {
+                    e.consume();
+                    return;
+                }
+
+                // If clickListener is set, use it (allows sidebar integration)
                 if (clickListener != null) {
                     clickListener.accept(gp);
                 } else {
-                    addMarker(gp);
+                    // No clickListener: add marker directly
+                    addMarkerImmediately(gp);
                 }
+
+                e.consume();
             }
         });
     }
+
 
 
     public void setCenter(double latitude, double longitude) {
@@ -381,27 +403,63 @@ public class MapPanel extends JPanel {
     }
 
 
-    private void addMarker(GeoPosition position) {
-        markerPositions.add(position);
-        waypoints.clear();
-        for (GeoPosition gp : markerPositions) {
-            waypoints.add(new DefaultWaypoint(gp));
+    private void addMarkerImmediately(GeoPosition position) {
+        // Check for duplicate positions using proper floating-point comparison
+        final double EPSILON = 1e-9;
+        for (GeoPosition existingPos : markerPositions) {
+            if (Math.abs(existingPos.getLatitude() - position.getLatitude()) < EPSILON &&
+                Math.abs(existingPos.getLongitude() - position.getLongitude()) < EPSILON) {
+                return; // Marker already exists at this position
+            }
         }
+
+        markerPositions.add(position);
+        waypoints.add(new DefaultWaypoint(position));
         waypointPainter.setWaypoints(waypoints);
         numberedMarkerPainter.setPositions(markerPositions);
-        mapViewer.repaint();
+
+        // Repaint only the marker area for fastest update (± 40 pixels)
+        java.awt.geom.Point2D pt = mapViewer.convertGeoPositionToPoint(position);
+        if (pt != null) {
+            int x = (int) pt.getX() - 40;
+            int y = (int) pt.getY() - 40;
+            mapViewer.repaint(x, y, 80, 80);
+        } else {
+            mapViewer.repaint();
+        }
+    }
+
+    private void addMarker(GeoPosition position) {
+        // ...existing code...
+        addMarkerImmediately(position);
     }
 
     public void addStop(double latitude, double longitude) {
         GeoPosition gp = new GeoPosition(latitude, longitude);
-        markerPositions.add(gp);
-        waypoints.clear();
-        for (GeoPosition p : markerPositions) {
-            waypoints.add(new DefaultWaypoint(p));
+
+        // Check for duplicate positions using proper floating-point comparison
+        final double EPSILON = 1e-9;
+        for (GeoPosition existingPos : markerPositions) {
+            if (Math.abs(existingPos.getLatitude() - latitude) < EPSILON &&
+                Math.abs(existingPos.getLongitude() - longitude) < EPSILON) {
+                return; // Marker already exists at this position
+            }
         }
+
+        markerPositions.add(gp);
+        waypoints.add(new DefaultWaypoint(gp));
         waypointPainter.setWaypoints(waypoints);
         numberedMarkerPainter.setPositions(markerPositions);
-        mapViewer.repaint();
+
+        // Repaint only the marker area for faster update (± 40 pixels)
+        java.awt.geom.Point2D pt = mapViewer.convertGeoPositionToPoint(gp);
+        if (pt != null) {
+            int x = (int) pt.getX() - 40;
+            int y = (int) pt.getY() - 40;
+            mapViewer.repaint(x, y, 80, 80);
+        } else {
+            mapViewer.repaint();
+        }
     }
 
     public void setStops(List<GeoPosition> positions) {
@@ -413,7 +471,7 @@ public class MapPanel extends JPanel {
         }
         waypointPainter.setWaypoints(waypoints);
         numberedMarkerPainter.setPositions(markerPositions);
-        mapViewer.repaint();
+        mapViewer.repaint();  // Full repaint here is OK since it's a bulk update operation
     }
 
     public void clearStops() {

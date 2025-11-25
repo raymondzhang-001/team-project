@@ -613,6 +613,51 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
                 }
             }
         });
+
+        // Set up map click listener to add stops when clicking on map
+        // This ensures markers appear on both map and sidebar immediately with no delay
+        mapPanel.setClickListener(gp -> {
+            if (gp != null) {
+                // Add marker IMMEDIATELY with "Loading..." for instant visual feedback
+                String tempName = "Loading...";
+                addStop(tempName, gp);
+
+                // Track the index of the newly added stop
+                final int markerIndex = stopPositions.size() - 1;
+
+                // Fetch real location name in background and update
+                SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+                    @Override
+                    protected String doInBackground() throws Exception {
+                        try {
+                            if (osmDao != null) {
+                                entity.Location location = osmDao.reverse(gp.getLatitude(), gp.getLongitude());
+                                return location.getName();
+                            }
+                        } catch (Exception e) {
+                            // Fall back to coordinates if reverse geocoding fails
+                        }
+                        return null;  // Signals to keep temp name
+                    }
+
+                    @Override
+                    protected void done() {
+                        try {
+                            String realName = get();
+                            if (realName != null && !realName.isEmpty()) {
+                                // Update the stop with real location name using tracked index
+                                if (markerIndex >= 0 && markerIndex < stopsListModel.getSize()) {
+                                    stopsListModel.set(markerIndex, realName);
+                                }
+                            }
+                        } catch (Exception e) {
+                            // Keep the temporary name if anything fails
+                        }
+                    }
+                };
+                worker.execute();
+            }
+        });
     }
 
     private void showRerouteProgress() {
