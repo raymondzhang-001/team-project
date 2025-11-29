@@ -1,8 +1,5 @@
 package entity;
 
-/**
- * Represents the marker(pin) on the map
- */
 public class Marker {
     private final Location location;
 
@@ -23,3 +20,4 @@ public class Marker {
     }
 
 }
+

@@ -1,8 +1,5 @@
 package interface_adapter.addMarker;
 
-/**
- * State for the Add Marker ViewModel.
- */
 public class AddMarkerState {
 
     private Double lastMarkerLatitude;
