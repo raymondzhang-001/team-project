@@ -4,9 +4,46 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b50313f8-1e33-41e4-88d3-e829184e5d9f" name="Changes" comment="">
+    <list default="true" id="b50313f8-1e33-41e4-88d3-e829184e5d9f" name="Changes" comment="Business logic">
+      <change afterPath="$PROJECT_DIR$/src/main/java/view/StopCellRenderer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/app/AppBuilder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/app/AppBuilder.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/app/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/app/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/data_access/OSMDataAccessObject.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/data_access/OSMDataAccessObject.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/entity/Location.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/entity/Location.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/entity/Marker.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/interface_adapter/ViewManagerModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/interface_adapter/ViewManagerModel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/interface_adapter/ViewModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/interface_adapter/ViewModel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/interface_adapter/addMarker/AddMarkerController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/interface_adapter/addMarker/AddMarkerPresenter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/interface_adapter/addMarker/AddMarkerState.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/interface_adapter/addMarker/AddMarkerViewModel.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/interface_adapter/search/SearchController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/interface_adapter/search/SearchController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/interface_adapter/search/SearchPresenter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/interface_adapter/search/SearchPresenter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/interface_adapter/search/SearchState.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/interface_adapter/search/SearchState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/interface_adapter/search/SearchViewModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/interface_adapter/search/SearchViewModel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/add_marker/AddMarkerDataAccessInterface.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/add_marker/AddMarkerInputBoundary.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/add_marker/AddMarkerInputData.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/add_marker/AddMarkerInteractor.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/add_marker/AddMarkerOutputBoundary.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/add_marker/AddMarkerOutputData.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/git.keep" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/remove_marker/RemoveMarkerInputBoundary.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/remove_marker/RemoveMarkerInputData.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/remove_marker/RemoveMarkerInteractor.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/remove_marker/RemoveMarkerOutputBoundary.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/remove_marker/RemoveMarkerOutputData.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/search/SearchDataAccessInterface.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/use_case/search/SearchDataAccessInterface.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/search/SearchInputBoundary.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/use_case/search/SearchInputBoundary.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/search/SearchInputData.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/use_case/search/SearchInputData.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/search/SearchInteractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/use_case/search/SearchInteractor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/search/SearchOutputBoundary.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/use_case/search/SearchOutputBoundary.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/use_case/search/SearchOutputData.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/use_case/search/SearchOutputData.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/view/AddMarkerView.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/view/MapPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/view/MapPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/view/SearchView.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/view/SearchView.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/view/ViewManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/view/ViewManager.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,7 +61,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="TeamContract" />
+        <entry key="$PROJECT_DIR$" value="main" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -41,38 +78,54 @@
     &quot;accountId&quot;: &quot;792649c6-dbe6-4ad6-80c4-9f89f751915e&quot;
   }
 }</component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 3
 }</component>
   <component name="ProjectId" id="34B1hosS4zTtQwCHvgzHwdBkYK2" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Main.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "SONARLINT_PRECOMMIT_ANALYSIS": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "UI+SearchUsecase-Final",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/Motion/IdeaProjects/csc207/team-project/src/main",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Motion\IdeaProjects\csc207\team-project\src\main" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Motion\IdeaProjects\csc207\team-project\src\main" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="app.Main" />
-      <module name="TeamProject" />
+      <module name="team-project" />
       <extension name="coverage">
         <pattern>
           <option name="PATTERN" value="app.*" />
@@ -93,8 +146,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.26830.84" />
-        <option value="bundled-js-predefined-d6986cc7102b-3aa1da707db6-JavaScript-IU-252.26830.84" />
+        <option value="bundled-jdk-9823dce3aa75-bf35d07a577b-intellij.indexing.shared.core-IU-252.25557.131" />
+        <option value="bundled-js-predefined-d6986cc7102b-b598e85cdad2-JavaScript-IU-252.25557.131" />
       </set>
     </attachedChunks>
   </component>
@@ -110,9 +163,34 @@
       <workItem from="1760743573745" duration="343000" />
       <workItem from="1760987551082" duration="6000" />
     </task>
+    <task id="LOCAL-00001" summary="gitignore">
+      <option name="closed" value="true" />
+      <created>1764484568319</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1764484568319</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="gitignore" />
+    <MESSAGE value="Business logic" />
+    <option name="LAST_COMMIT_MESSAGE" value="Business logic" />
   </component>
 </project>
