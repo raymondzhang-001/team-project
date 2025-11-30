@@ -5,7 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b50313f8-1e33-41e4-88d3-e829184e5d9f" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/app/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/app/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/view/MapPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/view/MapPanel.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,7 +38,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/BaihanW/team-project.git&quot;,
-    &quot;accountId&quot;: &quot;20433112-c384-4120-9d48-06ac955720bf&quot;
+    &quot;accountId&quot;: &quot;792649c6-dbe6-4ad6-80c4-9f89f751915e&quot;
   }
 }</component>
   <component name="ProjectColorInfo">{
@@ -55,7 +56,6 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultAutoModeForALLUsers.v1&quot;: &quot;true&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
@@ -69,15 +69,7 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\white\IdeaProjects\team-project1\src\test\java\use_case" />
-    </key>
-    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
-      <recent name="use_case.add_marker" />
-    </key>
-  </component>
-  <component name="RunManager" selected="JUnit.AddMarkerInteractorTest$TestAddMarkerPresenter.addsNewMarkerWhenNotDuplicate">
+  <component name="RunManager">
     <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="app.Main" />
       <module name="TeamProject" />
@@ -91,25 +83,8 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AddMarkerInteractorTest$TestAddMarkerPresenter.addsNewMarkerWhenNotDuplicate" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="TeamProject" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="use_case.add_marker.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="use_case.add_marker.AddMarkerInteractorTest" />
-      <option name="MAIN_CLASS_NAME" value="use_case.add_marker.AddMarkerInteractorTest$TestAddMarkerPresenter" />
-      <option name="METHOD_NAME" value="addsNewMarkerWhenNotDuplicate" />
-      <option name="TEST_OBJECT" value="method" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.AddMarkerInteractorTest$TestAddMarkerPresenter.addsNewMarkerWhenNotDuplicate" />
         <item itemvalue="Application.Main" />
         <item itemvalue="Application.Main" />
       </list>
@@ -125,7 +100,7 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="b50313f8-1e33-41e4-88d3-e829184e5d9f" name="Changes" comment="" />
+      <changelist id="90b712cd-4ef7-4eb6-9437-5f2dda42cb66" name="Changes" comment="" />
       <created>1760672273012</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
@@ -134,23 +109,6 @@
       <workItem from="1760675806708" duration="275000" />
       <workItem from="1760743573745" duration="343000" />
       <workItem from="1760987551082" duration="6000" />
-      <workItem from="1764381327756" duration="81000" />
-      <workItem from="1764381709191" duration="20000" />
-      <workItem from="1764381744715" duration="24000" />
-      <workItem from="1764381780407" duration="9000" />
-      <workItem from="1764381797813" duration="125000" />
-      <workItem from="1764381937427" duration="28000" />
-      <workItem from="1764381978795" duration="930000" />
-      <workItem from="1764383953010" duration="8000" />
-      <workItem from="1764383978311" duration="15000" />
-      <workItem from="1764384014640" duration="17000" />
-      <workItem from="1764384042980" duration="25000" />
-      <workItem from="1764384082269" duration="24000" />
-      <workItem from="1764390091429" duration="894000" />
-      <workItem from="1764391015831" duration="129000" />
-      <workItem from="1764391769093" duration="5000" />
-      <workItem from="1764392380345" duration="835000" />
-      <workItem from="1764464923305" duration="1185000" />
     </task>
     <servers />
   </component>

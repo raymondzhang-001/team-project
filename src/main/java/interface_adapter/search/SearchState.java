@@ -1,13 +1,30 @@
 package interface_adapter.search;
 
-/**
- * The state for the Search Model.
- */
+import org.jxmapviewer.viewer.GeoPosition;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class SearchState {
     private String locationName;
     private double latitude;
     private double longitude;
     private String searchError;
+    private List<String> stopNames = new ArrayList<>();
+    private List<GeoPosition> stops = new ArrayList<>();
+    private String errorMessage;
+
+    public SearchState() {}
+
+    public SearchState(SearchState copy) {
+        this.locationName = copy.getLocationName();
+        this.latitude = copy.getLatitude();
+        this.longitude = copy.getLongitude();
+        this.searchError = copy.getSearchError();
+        this.stopNames = new ArrayList<>(copy.getStopNames());
+        this.stops = new ArrayList<>(copy.getStops());
+        this.errorMessage = copy.getErrorMessage();
+    }
 
     public double getLatitude() {
         return latitude;
@@ -41,4 +58,28 @@ public class SearchState {
         this.searchError = searchError;
     }
 
+    public List<String> getStopNames() {
+        return new ArrayList<>(stopNames);
+    }
+
+    public void setStopNames(List<String> stopNames) {
+        this.stopNames = new ArrayList<>(stopNames);
+    }
+
+    public List<GeoPosition> getStops() {
+        return new ArrayList<>(stops);
+    }
+
+    public void setStops(List<GeoPosition> stops) {
+        this.stops = new ArrayList<>(stops);
+    }
+
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
 }

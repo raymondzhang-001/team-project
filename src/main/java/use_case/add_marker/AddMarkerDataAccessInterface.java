@@ -5,9 +5,24 @@ import entity.Marker;
 
 import java.util.List;
 
-public interface AddMarkerDataAccessInterface {
+/**
+ * DAO interface for AddMarkerAccessInterface
+ */
 
+public interface AddMarkerDataAccessInterface {
+    /**
+     * checks if a marker already exists at the given location
+     */
     boolean exists(Location location);
+
+    /**
+     * saves the marker
+     */
     void save(Marker marker);
+
+    /**
+     * Returns all markers currently stored
+     */
+    List<Marker> getAllMarkers();
 
 }

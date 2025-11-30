@@ -3,6 +3,9 @@ package use_case.add_marker;
 import entity.Location;
 import entity.Marker;
 
+/**
+ AddMarkerInteractor
+ */
 public class AddMarkerInteractor implements AddMarkerInputBoundary {
     private final AddMarkerDataAccessInterface addMarkerAccessObj;
     private final AddMarkerOutputBoundary addMarkerPresenter;
