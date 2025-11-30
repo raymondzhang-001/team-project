@@ -15,7 +15,7 @@ import java.awt.*;
 import java.net.http.HttpClient;
 
 /**
- * Builder of the final GUI
+ * Configures and wires the application using the simplified Clean Architecture graph.
  */
 public class AppBuilder {
 
@@ -26,7 +26,6 @@ public class AppBuilder {
 
     private final HttpClient client = HttpClient.newHttpClient();
     final OSMDataAccessObject osmDataAccessObject = new OSMDataAccessObject(client);
-
 
     private SearchViewModel searchViewModel;
     private SearchView searchView;
@@ -49,6 +48,7 @@ public class AppBuilder {
 
         SearchController searchController = new SearchController(searchInteractor);
         searchView.setSearchController(searchController);
+
         return this;
     }
 
@@ -63,6 +63,4 @@ public class AppBuilder {
 
         return application;
     }
-
-
 }
