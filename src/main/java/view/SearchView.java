@@ -14,6 +14,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.logging.Logger;
+import interface_adapter.generate_route.GenerateRouteController;
+import interface_adapter.generate_route.GenerateRouteViewModel;
+import interface_adapter.generate_route.GenerateRouteState;
 
 import org.jxmapviewer.viewer.GeoPosition;
 
@@ -39,7 +42,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     private final JButton searchButton = new JButton("Search");
     private final JButton routeButton = new JButton("Route");
     private final JButton saveButton = new JButton("Save");
-        private final JButton moveUpButton = new JButton("Up");
+    private final JButton moveUpButton = new JButton("Up");
     private final JButton moveDownButton = new JButton("Down");
     private final JButton removeButton = new JButton("Remove");
 
@@ -47,6 +50,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     private transient SearchController searchController = null;
     private transient SaveStopsController saveStopsController = null;
     private transient RemoveMarkerController removeMarkerController = null;
+    private transient GenerateRouteController generateRouteController = null;
 
     // Map panel
     private final MapPanel mapPanel = new MapPanel();
@@ -55,12 +59,13 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     private final DefaultListModel<String> stopsListModel = new DefaultListModel<>();
     private final JList<String> stopsList = new JList<>(stopsListModel);
 
-    public SearchView(SearchViewModel searchViewModel) {
+    public SearchView(SearchViewModel searchViewModel, GenerateRouteViewModel routeViewModel) {
 
         this.viewName = searchViewModel.getViewName();
         this.searchViewModel = searchViewModel;
 
         this.searchViewModel.addPropertyChangeListener(this);
+        routeViewModel.addPropertyChangeListener(this);
 
         setLayout(new BorderLayout());
 
@@ -77,6 +82,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         attachSearchButtonListener();
         attachSaveButtonListener();
         attachRemoveButtonListener();
+        attachRouteButtonListener();
     }
 
     /* --------------------------------------------------------------------- */
@@ -162,6 +168,15 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     /* --------------------------------------------------------------------- */
     /* EVENT ATTACHMENTS                                                     */
     /* --------------------------------------------------------------------- */
+
+    private void attachRouteButtonListener() {
+        routeButton.addActionListener(evt -> {
+            if (generateRouteController == null) return;
+
+            List<GeoPosition> stops = searchViewModel.getState().getStops();
+            generateRouteController.generate("walking", stops);
+        });
+    }
 
     private void attachSearchButtonListener() {
         searchButton.addActionListener(evt -> {
@@ -281,6 +296,17 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
             SearchState state = (SearchState) newValue;
             handleSearchState(state);
         }
+
+        if (evt.getNewValue() instanceof GenerateRouteState) {
+            GenerateRouteState state = (GenerateRouteState) evt.getNewValue();
+
+            if ("route".equals(evt.getPropertyName())) {
+                mapPanel.setRouteSegments(state.getRouteSegments());
+            }
+            if ("error".equals(evt.getPropertyName())) {
+                JOptionPane.showMessageDialog(this, state.getErrorMessage());
+            }
+        }
     }
 
 
@@ -335,6 +361,10 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
 
     public String getViewName() {
         return viewName;
+    }
+
+    public void setGenerateRouteController(GenerateRouteController generateRouteController) {
+        this.generateRouteController = generateRouteController;
     }
 
     public void setSearchController(SearchController searchController) {
