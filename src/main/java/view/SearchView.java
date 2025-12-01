@@ -1,7 +1,7 @@
 package view;
 
+import interface_adapter.save_stops.SaveStopsController;
 import interface_adapter.search.SearchController;
-import interface_adapter.remove_marker.RemoveMarkerController;
 import interface_adapter.search.SearchState;
 import interface_adapter.search.SearchViewModel;
 import interface_adapter.remove_marker.RemoveMarkerController;
@@ -40,6 +40,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     private final JButton searchButton = new JButton("Search");
     private final JButton routeButton = new JButton("Route");
     private final JButton moveUpButton = new JButton("Up");
+    private final JButton saveButton = new JButton("Save");
     private final JButton moveDownButton = new JButton("Down");
     private final JButton removeButton = new JButton("Remove");
     private final DefaultListModel<String> suggestionListModel = new DefaultListModel<>();
@@ -49,15 +50,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     private transient SearchController searchController = null;
     private transient RemoveMarkerController removeMarkerController = null;
     private transient SuggestionController suggestionController = null;
-    private final JButton saveButton = new JButton("Save");
-        private final JButton moveUpButton = new JButton("Up");
-    private final JButton moveDownButton = new JButton("Down");
-    private final JButton removeButton = new JButton("Remove");
-
-    // Controller
-    private transient SearchController searchController = null;
     private transient SaveStopsController saveStopsController = null;
-    private transient RemoveMarkerController removeMarkerController = null;
 
     // Map panel
     private final MapPanel mapPanel = new MapPanel();
@@ -89,7 +82,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         attachRemoveButtonListener();
         attachSuggestionListListeners();
         attachSaveButtonListener();
-        attachRemoveButtonListener();
     }
 
     /* --------------------------------------------------------------------- */
@@ -126,6 +118,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         buttons.setOpaque(false);
         buttons.add(searchButton);
         buttons.add(routeButton);
+        buttons.add(saveButton);
 
         JPanel searchRow = new JPanel(new BorderLayout());
         searchRow.setOpaque(false);
@@ -215,7 +208,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         });
     }
 
-
     /**
      * When user types in search box, update the ViewModel's state.
      * (This keeps state consistent.)
@@ -298,25 +290,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         searchButton.doClick();
     }
 
-     private void attachRemoveButtonListener() {
-        removeButton.addActionListener(evt -> {
-            if (removeMarkerController == null) return;
-
-            int selectedIndex = stopsList.getSelectedIndex();
-            if (selectedIndex < 0) {
-                showPopupError("Select a stop to remove.");
-                return;
-            }
-
-            SearchState currentState = searchViewModel.getState();
-            removeMarkerController.removeAt(
-                    selectedIndex,
-                    currentState.getStopNames(),
-                    currentState.getStops()
-            );
-        });
-    }
-    
     /* --------------------------------------------------------------------- */
     /* PROPERTY CHANGE HANDLING                                              */
     /* --------------------------------------------------------------------- */
@@ -398,8 +371,8 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         this.suggestionController = suggestionController;
     }
 
-    public void setRemoveMarkerController(RemoveMarkerController removeMarkerController) {
-        this.removeMarkerController = removeMarkerController;
+    public void setSaveStopsController(SaveStopsController saveStopsController) {
+        this.saveStopsController = saveStopsController;
     }
 
     @Override
