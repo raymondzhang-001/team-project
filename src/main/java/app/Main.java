@@ -9,6 +9,7 @@ public class Main {
                 .addSearchView()
                 .addSearchUseCase()
                 .addSaveStopsUseCase()
+                .addRemoveMarkerUseCase()
                 .build();
 
         application.pack();
