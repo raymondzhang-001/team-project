@@ -12,9 +12,8 @@ public class SearchState {
     private String searchError;
     private List<String> stopNames = new ArrayList<>();
     private List<GeoPosition> stops = new ArrayList<>();
+    private List<List<GeoPosition>> routeSegments = new ArrayList<>();
     private String errorMessage;
-    private List<String> suggestions = new ArrayList<>();
-    private String suggestionError;
 
     public SearchState() {}
 
@@ -25,9 +24,11 @@ public class SearchState {
         this.searchError = copy.getSearchError();
         this.stopNames = new ArrayList<>(copy.getStopNames());
         this.stops = new ArrayList<>(copy.getStops());
+        this.routeSegments = new ArrayList<>();
+        for (List<GeoPosition> segment : copy.getRouteSegments()) {
+            this.routeSegments.add(new ArrayList<>(segment));
+        }
         this.errorMessage = copy.getErrorMessage();
-        this.suggestions = new ArrayList<>(copy.getSuggestions());
-        this.suggestionError = copy.getSuggestionError();
     }
 
     public double getLatitude() {
@@ -78,6 +79,21 @@ public class SearchState {
         this.stops = new ArrayList<>(stops);
     }
 
+    public List<List<GeoPosition>> getRouteSegments() {
+        List<List<GeoPosition>> copy = new ArrayList<>();
+        for (List<GeoPosition> segment : routeSegments) {
+            copy.add(new ArrayList<>(segment));
+        }
+        return copy;
+    }
+
+    public void setRouteSegments(List<List<GeoPosition>> routeSegments) {
+        List<List<GeoPosition>> copy = new ArrayList<>();
+        for (List<GeoPosition> segment : routeSegments) {
+            copy.add(new ArrayList<>(segment));
+        }
+        this.routeSegments = copy;
+    }
 
     public String getErrorMessage() {
         return errorMessage;
@@ -85,21 +101,5 @@ public class SearchState {
 
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
-    }
-
-    public List<String> getSuggestions() {
-        return new ArrayList<>(suggestions);
-    }
-
-    public void setSuggestions(List<String> suggestions) {
-        this.suggestions = new ArrayList<>(suggestions);
-    }
-
-    public String getSuggestionError() {
-        return suggestionError;
-    }
-
-    public void setSuggestionError(String suggestionError) {
-        this.suggestionError = suggestionError;
     }
 }

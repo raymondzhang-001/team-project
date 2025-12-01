@@ -1,10 +1,7 @@
 package interface_adapter.search;
 
-import org.jxmapviewer.viewer.GeoPosition;
 import use_case.search.SearchOutputBoundary;
 import use_case.search.SearchOutputData;
-
-import java.util.List;
 
 public class SearchPresenter implements SearchOutputBoundary {
 
@@ -17,34 +14,18 @@ public class SearchPresenter implements SearchOutputBoundary {
     @Override
     public void prepareSuccessView(SearchOutputData response) {
         final SearchState searchState = new SearchState(searchViewModel.getState());
-
-        // Add stop
-        List<String> names = searchState.getStopNames();
-        names.add(response.getLocationName());
-        searchState.setStopNames(names);
-        List<GeoPosition> stops = searchState.getStops();
-        stops.add(new GeoPosition(
-                response.getLatitude(),
-                response.getLongitude()
-        ));
-        searchState.setStops(stops);
-
-        // Update location info
+        searchState.setLocationName(response.getLocationName());
         searchState.setLatitude(response.getLatitude());
         searchState.setLongitude(response.getLongitude());
-        searchState.setLocationName(response.getLocationName());
-        searchState.setSuggestions(List.of());
-        searchState.setSuggestionError(null);
-
-        searchViewModel.setState(searchState);
-        searchViewModel.firePropertyChange();
+        searchState.setSearchError(null);
+        this.searchViewModel.setState(searchState);
+        this.searchViewModel.firePropertyChange();
     }
 
     @Override
     public void prepareFailView(String error) {
         final SearchState searchState = new SearchState(searchViewModel.getState());
         searchState.setSearchError(error);
-        searchState.setSuggestionError(null);
         searchViewModel.setState(searchState);
         searchViewModel.firePropertyChange();
     }

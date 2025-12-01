@@ -1,325 +1,488 @@
 package view;
 
-import interface_adapter.save_stops.SaveStopsController;
+import interface_adapter.generate_route.GenerateRouteController;
+import interface_adapter.remove_marker.RemoveMarkerController;
 import interface_adapter.search.SearchController;
 import interface_adapter.search.SearchState;
 import interface_adapter.search.SearchViewModel;
-import interface_adapter.remove_marker.RemoveMarkerController;
-import interface_adapter.suggestion.SuggestionController;
+import interface_adapter.reorder.ReorderController;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
-
 import org.jxmapviewer.viewer.GeoPosition;
 
-/**
- * SearchView
- * A Swing UI panel that displays:
- * - A search bar (text field + search button)
- * - A list of stops
- * - A map with zoom controls
- * <p>
- * Responsibilities:
- * - Render UI and react to UI events
- * - Notify the SearchController when the user initiates a search
- * - Listen to SearchViewModel changes and update UI accordingly
- */
 public class SearchView extends JPanel implements ActionListener, PropertyChangeListener {
 
     private final String viewName;
-    private final transient SearchViewModel searchViewModel;
-
-    // UI controls
+    private final SearchViewModel searchViewModel;
+    final JPanel searchLocationPanel = new JPanel(new BorderLayout());
     private final JTextField searchInputField = new JTextField(15);
-    private final JButton searchButton = new JButton("Search");
+    private final JButton search =  new JButton("Search");
     private final JButton routeButton = new JButton("Route");
-    private final JButton moveUpButton = new JButton("Up");
-    private final JButton saveButton = new JButton("Save");
-    private final JButton moveDownButton = new JButton("Down");
-    private final JButton removeButton = new JButton("Remove");
-    private final DefaultListModel<String> suggestionListModel = new DefaultListModel<>();
-    private final JList<String> suggestionList = new JList<>(suggestionListModel);
-    private final Timer suggestionDebounceTimer;
 
-    // Controller
     private transient SearchController searchController = null;
     private transient RemoveMarkerController removeMarkerController = null;
-    private transient SuggestionController suggestionController = null;
-    private transient SaveStopsController saveStopsController = null;
-
-    // Map panel
+    private transient ReorderController reorderController = null;
+    private transient GenerateRouteController generateRouteController = null;
     private final MapPanel mapPanel = new MapPanel();
 
-    // Stop list UI
     private final DefaultListModel<String> stopsListModel = new DefaultListModel<>();
     private final JList<String> stopsList = new JList<>(stopsListModel);
 
-    // UI update guard
-    private boolean updatingFromModel = false;
+    // progress UI for rerouting
+    private final JPanel progressPanelContainer; // hold in bottom-right
+    private final JProgressBar rerouteProgressBar;
+    private final JLabel rerouteLabel;
+    private Timer progressTimer;
+    private int fakeProgress = 0;
 
+    // Zoom controls container
+    private final JPanel zoomControlsContainer;
+
+    /**
+     * Construct the SearchView JPanel from its SearchViewModel
+     */
     public SearchView(SearchViewModel searchViewModel) {
-
         this.viewName = searchViewModel.getViewName();
         this.searchViewModel = searchViewModel;
+        searchViewModel.addPropertyChangeListener(this);
 
-        this.searchViewModel.addPropertyChangeListener(this);
+        search.addActionListener(
+                evt -> {
+                    if (evt.getSource().equals(search)) {
+                        final SearchState currentState = searchViewModel.getState();
+                        // 确保 Controller 存在再调用
+                        if (searchController != null) {
+                            searchController.execute(currentState.getLocationName());
+                        }
+                    }
+                }
+        );
 
-        this.suggestionDebounceTimer = new Timer(250, evt -> {
-            if (suggestionController != null) {
-                suggestionController.execute(searchInputField.getText());
+        routeButton.addActionListener(evt -> triggerRouteComputation());
+
+        searchInputField.getDocument().addDocumentListener(new DocumentListener() {
+            private void documentListenerHelper() {
+                final SearchState currentState = searchViewModel.getState();
+                currentState.setLocationName(searchInputField.getText());
+                searchViewModel.setState(currentState);
             }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) { documentListenerHelper(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { documentListenerHelper(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { documentListenerHelper(); }
         });
-        this.suggestionDebounceTimer.setRepeats(false);
 
-        setLayout(new BorderLayout());
+        this.setLayout(new BorderLayout());
 
-        // Build and attach UI components
-        JSplitPane layoutSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-                buildLeftSidebar(), buildRightMapPanel());
-        layoutSplit.setDividerLocation(350);
-        layoutSplit.setOneTouchExpandable(true);
+        // Zoom controls container setup
+        zoomControlsContainer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 8));
+        zoomControlsContainer.setOpaque(false);
 
-        add(layoutSplit, BorderLayout.CENTER);
-        attachGlobalEnterKey();
-        attachStopsListDoubleClickListener();
-        attachSearchFieldListener();
-        attachSearchButtonListener();
-        attachRemoveButtonListener();
-        attachSuggestionListListeners();
-        attachSaveButtonListener();
-    }
+        // Zoom buttons logic
+        JButton leftZoomBtn = new JButton("+");
+        leftZoomBtn.setToolTipText("Zoom in");
+        leftZoomBtn.setPreferredSize(new Dimension(36, 24));
+        leftZoomBtn.setFont(leftZoomBtn.getFont().deriveFont(Font.BOLD, 14f));
+        leftZoomBtn.setMargin(new Insets(2, 4, 2, 4));
+        leftZoomBtn.setHorizontalAlignment(SwingConstants.CENTER);
+        leftZoomBtn.addActionListener(evt -> {
+            try {
+                JComponent viewer = mapPanel.getMapViewer();
+                GeoPosition center = mapPanel.getMapViewer().convertPointToGeoPosition(new Point(viewer.getWidth()/2, viewer.getHeight()/2));
+                int z = mapPanel.getMapViewer().getZoom();
+                int newZ = Math.max(0, z - 1);
+                mapPanel.getMapViewer().setZoom(newZ);
+                mapPanel.getMapViewer().setAddressLocation(center);
+            } catch (Exception ignored) {}
+        });
 
-    /* --------------------------------------------------------------------- */
-    /* UI BUILDERS                                                           */
-    /* --------------------------------------------------------------------- */
+        JButton rightZoomBtn = new JButton("-");
+        rightZoomBtn.setToolTipText("Zoom out");
+        rightZoomBtn.setPreferredSize(new Dimension(36, 24));
+        rightZoomBtn.setFont(rightZoomBtn.getFont().deriveFont(Font.BOLD, 14f));
+        rightZoomBtn.setMargin(new Insets(2, 4, 2, 4));
+        rightZoomBtn.setHorizontalAlignment(SwingConstants.CENTER);
+        rightZoomBtn.addActionListener(evt -> {
+            try {
+                JComponent viewer = mapPanel.getMapViewer();
+                GeoPosition center = mapPanel.getMapViewer().convertPointToGeoPosition(new Point(viewer.getWidth()/2, viewer.getHeight()/2));
+                int z = mapPanel.getMapViewer().getZoom();
+                int newZ = Math.min(20, z + 1);
+                mapPanel.getMapViewer().setZoom(newZ);
+                mapPanel.getMapViewer().setAddressLocation(center);
+            } catch (Exception ignored) {}
+        });
 
-    /**
-     * Build the left sidebar that contains:
-     * - Search bar
-     * - Stop list
-     * - Reorder/remove buttons
-     */
-    private JPanel buildLeftSidebar() {
-        JPanel left = new JPanel(new BorderLayout());
-        left.setPreferredSize(new Dimension(350, 800));
-        left.setBackground(new Color(70, 130, 180));
+        JPanel zoomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 0));
+        zoomPanel.setOpaque(false);
+        zoomPanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+        zoomControlsContainer.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
 
-        left.add(buildSearchSection(), BorderLayout.NORTH);
-        left.add(buildStopsListSection(), BorderLayout.CENTER);
-        left.add(buildStopsControlSection(), BorderLayout.SOUTH);
+        zoomPanel.add(leftZoomBtn);
+        zoomPanel.add(rightZoomBtn);
+        zoomControlsContainer.add(zoomPanel);
 
-        return left;
-    }
+        zoomControlsContainer.setPreferredSize(new Dimension(0, 44));
+        zoomControlsContainer.setVisible(true);
 
-    /**
-     * Build the search bar (text field + buttons).
-     */
-    private JPanel buildSearchSection() {
-        JPanel container = new JPanel(new BorderLayout());
-        container.setOpaque(false);
-        container.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        this.add(zoomControlsContainer, BorderLayout.NORTH);
 
-        JPanel buttons = new JPanel(new GridLayout(1, 2, 5, 5));
-        buttons.setOpaque(false);
-        buttons.add(searchButton);
-        buttons.add(routeButton);
-        buttons.add(saveButton);
+        // Left panel (sidebar)
+        JPanel leftPanel = new JPanel();
+        leftPanel.setBackground(new Color(70,130,180));
+        leftPanel.setLayout(new BorderLayout());
+        leftPanel.setPreferredSize(new Dimension(350, 800));
 
-        JPanel searchRow = new JPanel(new BorderLayout());
-        searchRow.setOpaque(false);
-        searchRow.add(searchInputField, BorderLayout.CENTER);
-        searchRow.add(buttons, BorderLayout.EAST);
+        JPanel topSearch = new JPanel(new BorderLayout());
+        topSearch.setOpaque(false);
+        topSearch.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        topSearch.add(searchInputField, BorderLayout.CENTER);
+        JPanel btns = new JPanel(new GridLayout(1,2,5,5));
+        btns.setOpaque(false);
+        btns.add(search);
+        btns.add(routeButton);
+        topSearch.add(btns, BorderLayout.EAST);
 
-        suggestionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        suggestionList.setBackground(new Color(240, 248, 255));
-        suggestionList.setVisibleRowCount(5);
+        // Ensure Enter triggers Search
+        searchInputField.addActionListener(evt -> search.doClick());
 
-        JScrollPane suggestionsScroll = new JScrollPane(suggestionList);
-        suggestionsScroll.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-        suggestionsScroll.setPreferredSize(new Dimension(0, 140));
+        leftPanel.add(topSearch, BorderLayout.NORTH);
 
-        container.add(searchRow, BorderLayout.NORTH);
-        container.add(suggestionsScroll, BorderLayout.CENTER);
-
-        return container;
-    }
-
-    /**
-     * Stop list section with custom renderer.
-     */
-    private JScrollPane buildStopsListSection() {
+        // Stops list setup
         stopsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         stopsList.setBackground(new Color(220, 235, 245));
-        stopsList.setCellRenderer(new StopCellRenderer(stopsListModel));
+        // Custom cell renderer
+        stopsList.setCellRenderer(new ListCellRenderer<String>() {
+            private final Font font = new JLabel().getFont().deriveFont(14f);
 
-        JScrollPane scroll = new JScrollPane(stopsList);
-        scroll.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            class CellPanel extends JPanel {
+                private String name = "";
+                private int index = 0;
+                private boolean isSelected = false;
 
-        return scroll;
-    }
+                public CellPanel() {
+                    setOpaque(true);
+                    setPreferredSize(new Dimension(0, 52));
+                }
 
-    /**
-     * Buttons for stop reordering/removal.
-     */
-    private JPanel buildStopsControlSection() {
-        JPanel controls = new JPanel(new GridLayout(1, 3, 5, 5));
+                public void setData(String name, int index, boolean isSelected) {
+                    this.name = name;
+                    this.index = index;
+                    this.isSelected = isSelected;
+                    setBackground(isSelected ? new Color(200, 220, 240) : new Color(220, 235, 245));
+                }
+
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                    int w = getWidth();
+                    int h = getHeight();
+                    int radius = 14;
+                    int badgeX = 12;
+                    int centerX = badgeX + radius;
+                    int centerY = h / 2;
+
+                    int n = stopsListModel.getSize();
+                    int segments = Math.max(0, n - 1);
+                    Color routeColor = new Color(0, 120, 255);
+
+                    if (index > 0 && segments > 0) {
+                        int segIndex = index - 1;
+                        float t = (segments == 1) ? 0f : ((float) segIndex) / (float) (segments - 1);
+                        int alphaStart = 255;
+                        int alphaEnd = Math.max(1, (int) Math.round(255 * 0.30));
+                        int alpha = (int) Math.round(alphaStart + t * (alphaEnd - alphaStart));
+                        alpha = Math.max(0, Math.min(255, alpha));
+                        g2.setColor(new Color(routeColor.getRed(), routeColor.getGreen(), routeColor.getBlue(), alpha));
+                        g2.setStroke(new BasicStroke(6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                        g2.drawLine(centerX, 0, centerX, centerY - radius);
+                    }
+
+                    if (index < n - 1 && segments > 0) {
+                        int segIndex = index;
+                        float t = (segments == 1) ? 0f : ((float) segIndex) / (float) (segments - 1);
+                        int alphaStart = 255;
+                        int alphaEnd = Math.max(1, (int) Math.round(255 * 0.30));
+                        int alpha = (int) Math.round(alphaStart + t * (alphaEnd - alphaStart));
+                        alpha = Math.max(0, Math.min(255, alpha));
+                        g2.setColor(new Color(routeColor.getRed(), routeColor.getGreen(), routeColor.getBlue(), alpha));
+                        g2.setStroke(new BasicStroke(6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                        g2.drawLine(centerX, centerY + radius, centerX, h);
+                    }
+
+                    int bx = badgeX;
+                    int by = centerY - radius;
+                    g2.setColor(new Color(100, 100, 140));
+                    g2.fillOval(bx, by, radius * 2, radius * 2);
+                    g2.setColor(Color.WHITE);
+                    g2.setStroke(new BasicStroke(2f));
+                    g2.drawOval(bx, by, radius * 2, radius * 2);
+
+                    String num = String.valueOf(index + 1);
+                    g2.setFont(font);
+                    FontMetrics fm = g2.getFontMetrics();
+                    int tx = bx + (radius * 2 - fm.stringWidth(num)) / 2;
+                    int ty = by + ((radius * 2 - fm.getHeight()) / 2) + fm.getAscent();
+                    g2.setColor(Color.WHITE);
+                    g2.drawString(num, tx, ty);
+
+                    g2.setColor(Color.DARK_GRAY);
+                    int nameX = bx + radius * 2 + 12;
+                    int nameY = centerY + fm.getAscent() / 2 - 2;
+                    g2.drawString(name, nameX, nameY);
+
+                    g2.dispose();
+                }
+            }
+
+            private final CellPanel panel = new CellPanel();
+
+            @Override
+            public Component getListCellRendererComponent(JList<? extends String> list, String value, int index, boolean isSelected, boolean cellHasFocus) {
+                panel.setData(value == null ? "" : value, index, isSelected);
+                return panel;
+            }
+        });
+        JScrollPane listScroll = new JScrollPane(stopsList);
+        listScroll.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        leftPanel.add(listScroll, BorderLayout.CENTER);
+
+        JPanel controls = new JPanel(new GridLayout(1,3,5,5));
         controls.setOpaque(false);
+        JButton up = new JButton("Up");
+        JButton down = new JButton("Down");
+        JButton remove = new JButton("Remove");
+        controls.add(up);
+        controls.add(down);
+        controls.add(remove);
+        leftPanel.add(controls, BorderLayout.SOUTH);
 
-        controls.add(moveUpButton);     // Placeholder for clean architecture hooks
-        controls.add(moveDownButton);
-        controls.add(removeButton);
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.add(mapPanel, BorderLayout.CENTER);
 
-        return controls;
-    }
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
+        split.setDividerLocation(350);
+        split.setResizeWeight(0);
+        split.setOneTouchExpandable(true);
+        this.add(split, BorderLayout.CENTER);
 
-    /**
-     * Build right side map container
-     */
-    private JPanel buildRightMapPanel() {
-        JPanel right = new JPanel(new BorderLayout());
-        right.add(mapPanel, BorderLayout.CENTER);
+        // Bottom-right progress panel
+        JPanel progressBox = new JPanel();
+        progressBox.setLayout(new BoxLayout(progressBox, BoxLayout.Y_AXIS));
+        progressBox.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(180, 180, 180)),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)));
+        progressBox.setBackground(new Color(255, 255, 255, 230));
 
-        return right;
-    }
+        rerouteLabel = new JLabel("");
+        rerouteLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        rerouteLabel.setFont(rerouteLabel.getFont().deriveFont(Font.PLAIN, 12f));
+        progressBox.add(rerouteLabel);
+        progressBox.add(Box.createRigidArea(new Dimension(0,6)));
 
-    /* --------------------------------------------------------------------- */
-    /* EVENT ATTACHMENTS                                                     */
-    /* --------------------------------------------------------------------- */
+        rerouteProgressBar = new JProgressBar(0, 100);
+        rerouteProgressBar.setValue(0);
+        rerouteProgressBar.setPreferredSize(new Dimension(220, 14));
+        rerouteProgressBar.setForeground(new Color(0, 120, 255));
+        rerouteProgressBar.setBorderPainted(false);
+        rerouteProgressBar.setStringPainted(false);
+        progressBox.add(rerouteProgressBar);
 
-    private void attachSearchButtonListener() {
-        searchButton.addActionListener(evt -> {
-            if (searchController == null) return;
-            String text = searchViewModel.getState().getLocationName();
-            searchController.execute(text);
-        });
-    }
+        progressPanelContainer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 16, 8));
+        progressPanelContainer.setOpaque(false);
+        progressPanelContainer.add(progressBox);
+        progressPanelContainer.setPreferredSize(new Dimension(0, 72));
+        progressPanelContainer.setVisible(true);
+        rerouteLabel.setText("");
+        rerouteProgressBar.setVisible(false);
 
-    private void attachRemoveButtonListener() {
-        removeButton.addActionListener(evt -> {
-            if (removeMarkerController == null) return;
+        this.add(progressPanelContainer, BorderLayout.SOUTH);
 
-            int selectedIndex = stopsList.getSelectedIndex();
-            if (selectedIndex < 0) {
-                showPopupError("Select a stop to remove.");
-                return;
+        SwingUtilities.invokeLater(() -> {
+            Dimension size = rightPanel.getSize();
+            if (size.width == 0 || size.height == 0) {
+                size = new Dimension(Math.max(800 - 350, 400), 600);
             }
-
-            SearchState currentState = searchViewModel.getState();
-            removeMarkerController.removeAt(
-                    selectedIndex,
-                    currentState.getStopNames(),
-                    currentState.getStops()
-            );
+            mapPanel.setBounds(0, 0, size.width, size.height);
         });
-    }
 
-    /**
-     * When user types in search box, update the ViewModel's state.
-     * (This keeps state consistent.)
-     */
-    private void attachSearchFieldListener() {
-        searchInputField.getDocument().addDocumentListener(new DocumentListener() {
-            private void updateState() {
-                if (updatingFromModel) return;
-
-                SearchState stateCopy = new SearchState(searchViewModel.getState());
-                stateCopy.setLocationName(searchInputField.getText());
-                searchViewModel.setState(stateCopy);
-                suggestionDebounceTimer.restart();
+        rightPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                Dimension size = rightPanel.getSize();
+                mapPanel.setBounds(0, 0, size.width, size.height);
             }
-
-            @Override public void insertUpdate(DocumentEvent e) { updateState(); }
-            @Override public void removeUpdate(DocumentEvent e) { updateState(); }
-            @Override public void changedUpdate(DocumentEvent e) { updateState(); }
         });
 
-        searchInputField.addActionListener(evt -> searchButton.doClick());
-    }
+        // wire up actions
+        up.addActionListener(e -> moveSelected(-1));
+        down.addActionListener(e -> moveSelected(1));
+        remove.addActionListener(e -> removeSelected());
 
-    private void attachSaveButtonListener() {
-        saveButton.addActionListener(e -> {
-            SearchState s = searchViewModel.getState();
-            saveStopsController.execute(s.getStopNames(), s.getStops());
-        });
-    }
-
-
-    private void attachGlobalEnterKey() {
-        this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
-                .put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "globalEnter");
+        // Global Enter
+        this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "globalEnter");
         this.getActionMap().put("globalEnter", new AbstractAction() {
-            @Override public void actionPerformed(ActionEvent e) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 if (searchInputField.isFocusOwner()) {
-                    searchButton.doClick();
-                } else {
-                    routeButton.doClick();
+                    search.doClick();
+                    return;
+                }
+                routeButton.doClick();
+            }
+        });
+
+        // List-specific keys
+        InputMap listIm = stopsList.getInputMap(JComponent.WHEN_FOCUSED);
+        ActionMap listAm = stopsList.getActionMap();
+        listIm.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "listUp");
+        listIm.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "listDown");
+        listIm.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), "listRemove");
+        listIm.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "listRemove");
+        listAm.put("listUp", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) { moveSelected(-1); }
+        });
+        listAm.put("listDown", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) { moveSelected(1); }
+        });
+        listAm.put("listRemove", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) { removeSelected(); }
+        });
+
+        // Simplified map click listener: Uses coordinates directly, no DAO dependency
+        mapPanel.setClickListener(gp -> {
+            String name = String.format("%.5f, %.5f", gp.getLatitude(), gp.getLongitude());
+            addStop(name, gp);
+        });
+
+        stopsList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
+                if (evt.getClickCount() == 2) {
+                    int idx = stopsList.locationToIndex(evt.getPoint());
+                    // Correct CA: Get data from ViewModel state instead of DAO
+                    List<GeoPosition> stops = searchViewModel.getState().getStops();
+                    if (idx >= 0 && idx < stops.size()) {
+                        GeoPosition p = stops.get(idx);
+                        mapPanel.setCenter(p.getLatitude(), p.getLongitude());
+                    }
                 }
             }
         });
     }
 
-    private void attachStopsListDoubleClickListener() {
-        stopsList.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent evt) {
-                if (evt.getClickCount() != 2) return;
-
-                int idx = stopsList.locationToIndex(evt.getPoint());
-                List<GeoPosition> stops = searchViewModel.getState().getStops();
-
-                if (idx >= 0 && idx < stops.size()) {
-                    GeoPosition p = stops.get(idx);
-                    mapPanel.setCenter(p.getLatitude(), p.getLongitude());
-                }
-            }
+    private void showRerouteProgress() {
+        SwingUtilities.invokeLater(() -> {
+            fakeProgress = 0;
+            rerouteProgressBar.setValue(0);
+            rerouteProgressBar.setVisible(true);
+            rerouteLabel.setText("Rerouting...");
+            if (progressTimer != null && progressTimer.isRunning()) progressTimer.stop();
+            progressTimer = new Timer(120, e -> {
+                int add = 3 + (int) (Math.random() * 6);
+                fakeProgress = Math.min(95, fakeProgress + add);
+                rerouteProgressBar.setValue(fakeProgress);
+            });
+            progressTimer.start();
         });
     }
 
-    private void attachSuggestionListListeners() {
-        suggestionList.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent evt) {
-                if (suggestionList.locationToIndex(evt.getPoint()) >= 0) {
-                    applySelectedSuggestion();
-                }
+    private void hideRerouteProgress() {
+        SwingUtilities.invokeLater(() -> {
+            if (progressTimer != null) {
+                progressTimer.stop();
             }
-        });
-
-        suggestionList.addKeyListener(new KeyAdapter() {
-            @Override public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    applySelectedSuggestion();
-                }
-            }
+            rerouteProgressBar.setValue(100);
+            Timer t = new Timer(300, e -> {
+                rerouteProgressBar.setVisible(false);
+                rerouteLabel.setText("");
+                ((Timer) e.getSource()).stop();
+            });
+            t.setRepeats(false);
+            t.start();
         });
     }
 
-    private void applySelectedSuggestion() {
-        String selection = suggestionList.getSelectedValue();
-        if (selection == null) return;
-
-        updatingFromModel = true;
-        try {
-            searchInputField.setText(selection);
-            int caret = selection.length();
-            searchInputField.setCaretPosition(caret);
-            searchInputField.select(caret, caret);
-        } finally {
-            updatingFromModel = false;
+    private void triggerRouteComputation() {
+        if (generateRouteController == null) {
+            JOptionPane.showMessageDialog(this, "Routing backend not configured.");
+            return;
         }
-        SearchState updatedState = new SearchState(searchViewModel.getState());
-        updatedState.setLocationName(selection);
-        searchViewModel.setState(updatedState);
-        searchButton.doClick();
+
+        showRerouteProgress();
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                generateRouteController.generate("walking", searchViewModel.getState().getStops());
+                return null;
+            }
+        };
+        worker.execute();
     }
 
-    /* --------------------------------------------------------------------- */
-    /* PROPERTY CHANGE HANDLING                                              */
-    /* --------------------------------------------------------------------- */
+    private void addStop(String name, GeoPosition gp) {
+        SearchState current = new SearchState(searchViewModel.getState());
+        List<String> names = new ArrayList<>(current.getStopNames());
+        names.add(name);
+        current.setStopNames(names);
+
+        List<GeoPosition> updatedStops = new ArrayList<>(current.getStops());
+        updatedStops.add(gp);
+        current.setStops(updatedStops);
+        current.setErrorMessage(null);
+        searchViewModel.setState(current);
+        searchViewModel.firePropertyChange("stops");
+    }
+
+    private void moveSelected(int delta) {
+        int idx = stopsList.getSelectedIndex();
+        if (idx == -1) return;
+        int newIdx = idx + delta;
+        if (reorderController != null) {
+            reorderController.move(idx, newIdx, searchViewModel.getState().getStopNames(),
+                    searchViewModel.getState().getStops());
+        }
+    }
+
+    private void removeSelected() {
+        int idx = stopsList.getSelectedIndex();
+        if (removeMarkerController != null) {
+            removeMarkerController.removeAt(idx, searchViewModel.getState().getStopNames(),
+                    searchViewModel.getState().getStops());
+        }
+    }
+
+    private void computeAndDisplayRouteIfAuto() {
+        List<GeoPosition> stops = searchViewModel.getState().getStops();
+        if (generateRouteController != null && stops.size() >= 2) {
+            triggerRouteComputation();
+        } else if (stops.size() < 2) {
+            mapPanel.clearRoute();
+        }
+    }
+
+    public void actionPerformed(ActionEvent evt) {
+        System.out.println("Click " + evt.getActionCommand());
+    }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
@@ -330,82 +493,64 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     }
 
     private void handleSearchState(SearchState state, String propertyName) {
-
-        updateFields(state);
-
-        // update stop list
-        stopsListModel.clear();
-        for (String name : state.getStopNames()) {
-            stopsListModel.addElement(name);
-        }
-
-        suggestionListModel.clear();
-        for (String suggestion : state.getSuggestions()) {
-            suggestionListModel.addElement(suggestion);
-        }
-
-        // update center if needed
-        mapPanel.setCenter(state.getLatitude(), state.getLongitude());
-
-        // handle errors from search or remove marker use cases
-        if (state.getSearchError() != null) showPopupError(state.getSearchError());
-        if (state.getErrorMessage() != null) showPopupError(state.getErrorMessage());
-        if (state.getSuggestionError() != null) showPopupError(state.getSuggestionError());
-
-    }
-
-    private void updateFields(SearchState state) {
-        String newText = state.getLocationName() == null ? "" : state.getLocationName();
-        String currentText = searchInputField.getText();
-
-        if (newText.equals(currentText)) {
-            updatingFromModel = true;
-            try {
-                int caret = newText.length();
-                searchInputField.setCaretPosition(caret);
-                searchInputField.select(caret, caret);
-            } finally {
-                updatingFromModel = false;
+        if ("stops".equals(propertyName)) {
+            stopsListModel.clear();
+            for (String name : state.getStopNames()) {
+                stopsListModel.addElement(name);
             }
+            if (!stopsListModel.isEmpty()) {
+                stopsList.setSelectedIndex(Math.max(0, Math.min(stopsListModel.size() - 1, stopsList.getSelectedIndex())));
+            }
+            mapPanel.setStops(state.getStops());
+            if (state.getStops().size() < 2) {
+                mapPanel.clearRoute();
+            }
+            computeAndDisplayRouteIfAuto();
             return;
         }
 
-        SwingUtilities.invokeLater(() -> {
-            updatingFromModel = true;
-            try {
-                searchInputField.setText(newText);
-                int caret = newText.length();
-                searchInputField.setCaretPosition(caret);
-                searchInputField.select(caret, caret);
-            } finally {
-                updatingFromModel = false;
-            }
-        });
-    }
+        if ("route".equals(propertyName)) {
+            mapPanel.setRouteSegments(state.getRouteSegments());
+            hideRerouteProgress();
+            return;
+        }
 
-    private void showPopupError(String message) {
-        JLabel label = new JLabel(message);
-        label.setOpaque(true);
-        label.setBackground(new Color(255, 255, 150));
+        if ("error".equals(propertyName) && state.getErrorMessage() != null) {
+            JOptionPane.showMessageDialog(this, state.getErrorMessage());
+            hideRerouteProgress();
+            return;
+        }
 
-        Window window = SwingUtilities.getWindowAncestor(this);
-        Popup popup = PopupFactory.getSharedInstance()
-                .getPopup(window, label, 700, 400);
-        popup.show();
-
-        Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-            @Override public void eventDispatched(AWTEvent event) {
-                if (event instanceof MouseEvent me && me.getID() == MouseEvent.MOUSE_PRESSED) {
-                    popup.hide();
-                    Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+        setFields(state);
+        if (state.getSearchError() != null) {
+            JLabel label = new JLabel(state.getSearchError());
+            label.setOpaque(true);
+            label.setBackground(new Color(255, 255, 150));
+            Window window = SwingUtilities.getWindowAncestor(this);
+            Popup popup = PopupFactory.getSharedInstance()
+                    .getPopup(window, label, 700, 400);
+            popup.show();
+            // --- FIX START: 使用全限定名 java.awt.event.AWTEventListener 解决报错 ---
+            Toolkit.getDefaultToolkit().addAWTEventListener(new java.awt.event.AWTEventListener() {
+                @Override
+                public void eventDispatched(AWTEvent event) {
+                    if (event instanceof MouseEvent me && me.getID() == MouseEvent.MOUSE_PRESSED) {
+                        popup.hide();
+                        Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+                    }
                 }
-            }
-        }, AWTEvent.MOUSE_EVENT_MASK);
+            }, AWTEvent.MOUSE_EVENT_MASK);
+            // --- FIX END ---
+        } else {
+            mapPanel.setCenter(state.getLatitude(), state.getLongitude());
+            addStop(state.getLocationName(), new GeoPosition(state.getLatitude(), state.getLongitude()));
+            computeAndDisplayRouteIfAuto();
+        }
     }
 
-    /* --------------------------------------------------------------------- */
-    /* GETTERS / SETTERS                                                     */
-    /* --------------------------------------------------------------------- */
+    private void setFields(SearchState state) {
+        searchInputField.setText(state.getLocationName());
+    }
 
     public String getViewName() {
         return viewName;
@@ -419,17 +564,11 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         this.removeMarkerController = removeMarkerController;
     }
 
-    public void setSuggestionController(SuggestionController suggestionController) {
-        this.suggestionController = suggestionController;
+    public void setReorderController(ReorderController reorderController) {
+        this.reorderController = reorderController;
     }
 
-    public void setSaveStopsController(SaveStopsController saveStopsController) {
-        this.saveStopsController = saveStopsController;
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent evt) {
-        Logger logger = Logger.getLogger(getClass().getName());
-        logger.info("Click " + evt.getActionCommand());
+    public void setGenerateRouteController(GenerateRouteController generateRouteController) {
+        this.generateRouteController = generateRouteController;
     }
 }

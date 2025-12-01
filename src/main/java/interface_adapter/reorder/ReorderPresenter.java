@@ -1,20 +1,20 @@
-package interface_adapter.remove_marker;
+package interface_adapter.reorder;
 
 import interface_adapter.search.SearchState;
 import interface_adapter.search.SearchViewModel;
-import use_case.remove_marker.RemoveMarkerOutputBoundary;
-import use_case.remove_marker.RemoveMarkerOutputData;
+import use_case.reorder.ReorderOutputBoundary;
+import use_case.reorder.ReorderOutputData;
 
-public class RemoveMarkerPresenter implements RemoveMarkerOutputBoundary {
+public class ReorderPresenter implements ReorderOutputBoundary {
 
     private final SearchViewModel searchViewModel;
 
-    public RemoveMarkerPresenter(SearchViewModel searchViewModel) {
+    public ReorderPresenter(SearchViewModel searchViewModel) {
         this.searchViewModel = searchViewModel;
     }
 
     @Override
-    public void prepareSuccessView(RemoveMarkerOutputData outputData) {
+    public void prepareSuccessView(ReorderOutputData outputData) {
         SearchState state = new SearchState(searchViewModel.getState());
         state.setStopNames(outputData.getStopNames());
         state.setStops(outputData.getStops());
