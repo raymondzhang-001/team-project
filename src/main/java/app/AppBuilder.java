@@ -1,15 +1,15 @@
 package app;
 
-import data_access.FileStopListDAO;
 import data_access.OSMDataAccessObject;
 import interface_adapter.ViewManagerModel;
-import interface_adapter.save_stops.SaveStopsController;
-import interface_adapter.save_stops.SaveStopsPresenter;
+
 import interface_adapter.search.SearchController;
 import interface_adapter.search.SearchPresenter;
 import interface_adapter.search.SearchViewModel;
 import interface_adapter.remove_marker.RemoveMarkerController;
 import interface_adapter.remove_marker.RemoveMarkerPresenter;
+import interface_adapter.suggestion.SuggestionController;
+import interface_adapter.suggestion.SuggestionPresenter;
 import use_case.save_stops.SaveStopsInputBoundary;
 import use_case.save_stops.SaveStopsInteractor;
 import use_case.save_stops.SaveStopsOutputBoundary;
@@ -19,6 +19,9 @@ import use_case.search.SearchOutputBoundary;
 import use_case.remove_marker.RemoveMarkerInputBoundary;
 import use_case.remove_marker.RemoveMarkerInteractor;
 import use_case.remove_marker.RemoveMarkerOutputBoundary;
+import use_case.suggestion.SuggestionInputBoundary;
+import use_case.suggestion.SuggestionInteractor;
+import use_case.suggestion.SuggestionOutputBoundary;
 import view.SearchView;
 import view.ViewManager;
 import javax.swing.*;
@@ -37,9 +40,6 @@ public class AppBuilder {
 
     private final HttpClient client = HttpClient.newHttpClient();
     final OSMDataAccessObject osmDataAccessObject = new OSMDataAccessObject(client);
-
-    private final String stopListPath = "src/main/";
-    final FileStopListDAO fileStopListDAO = new FileStopListDAO(stopListPath);
 
     private SearchViewModel searchViewModel;
     private SearchView searchView;
@@ -66,13 +66,12 @@ public class AppBuilder {
         return this;
     }
 
-    public AppBuilder addSaveStopsUseCase() {
-        final SaveStopsOutputBoundary saveStopsOutputBoundary = new SaveStopsPresenter(searchViewModel);
-        final SaveStopsInputBoundary saveStopsInteractor = new SaveStopsInteractor(
-                fileStopListDAO, saveStopsOutputBoundary);
+    public AppBuilder addSuggestionUseCase() {
+        final SuggestionOutputBoundary outputBoundary = new SuggestionPresenter(searchViewModel);
+        final SuggestionInputBoundary interactor = new SuggestionInteractor(osmDataAccessObject, outputBoundary);
 
-        SaveStopsController saveStopsController = new SaveStopsController(saveStopsInteractor);
-        searchView.setSaveStopsController(saveStopsController);
+        SuggestionController suggestionController = new SuggestionController(interactor);
+        searchView.setSuggestionController(suggestionController);
 
         return this;
     }
@@ -99,23 +98,11 @@ public class AppBuilder {
                 state.setStopNames(stored.names);
                 state.setStops(stored.positions);
 
-                // Center map on the last stop
-                var last = stored.positions.get(stored.positions.size() - 1);
-                state.setLatitude(last.getLatitude());
-                state.setLongitude(last.getLongitude());
-
-                searchViewModel.setState(state);
-                searchViewModel.firePropertyChange();
-            }
-
-        } catch (Exception e) {
-            System.err.println("Failed to load saved stops: " + e.getMessage());
-        }
+        RemoveMarkerController removeMarkerController = new RemoveMarkerController(removeMarkerInteractor);
+        searchView.setRemoveMarkerController(removeMarkerController);
 
         return this;
     }
-
-
 
     public JFrame build() {
         final JFrame application = new JFrame("trip planner");
@@ -125,7 +112,6 @@ public class AppBuilder {
 
         viewManagerModel.setState(searchView.getViewName());
         viewManagerModel.firePropertyChange();
-        loadStopsOnStartup();
 
         return application;
     }

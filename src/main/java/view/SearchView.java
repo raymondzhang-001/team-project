@@ -1,10 +1,11 @@
 package view;
 
-import interface_adapter.save_stops.SaveStopsController;
 import interface_adapter.search.SearchController;
 import interface_adapter.remove_marker.RemoveMarkerController;
 import interface_adapter.search.SearchState;
 import interface_adapter.search.SearchViewModel;
+import interface_adapter.remove_marker.RemoveMarkerController;
+import interface_adapter.suggestion.SuggestionController;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -38,6 +39,16 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     private final JTextField searchInputField = new JTextField(15);
     private final JButton searchButton = new JButton("Search");
     private final JButton routeButton = new JButton("Route");
+    private final JButton moveUpButton = new JButton("Up");
+    private final JButton moveDownButton = new JButton("Down");
+    private final JButton removeButton = new JButton("Remove");
+    private final DefaultListModel<String> suggestionListModel = new DefaultListModel<>();
+    private final JList<String> suggestionList = new JList<>(suggestionListModel);
+
+    // Controller
+    private transient SearchController searchController = null;
+    private transient RemoveMarkerController removeMarkerController = null;
+    private transient SuggestionController suggestionController = null;
     private final JButton saveButton = new JButton("Save");
         private final JButton moveUpButton = new JButton("Up");
     private final JButton moveDownButton = new JButton("Down");
@@ -75,6 +86,8 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         attachStopsListDoubleClickListener();
         attachSearchFieldListener();
         attachSearchButtonListener();
+        attachRemoveButtonListener();
+        attachSuggestionListListeners();
         attachSaveButtonListener();
         attachRemoveButtonListener();
     }
@@ -113,10 +126,22 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         buttons.setOpaque(false);
         buttons.add(searchButton);
         buttons.add(routeButton);
-        buttons.add(saveButton);
 
-        container.add(searchInputField, BorderLayout.CENTER);
-        container.add(buttons, BorderLayout.EAST);
+        JPanel searchRow = new JPanel(new BorderLayout());
+        searchRow.setOpaque(false);
+        searchRow.add(searchInputField, BorderLayout.CENTER);
+        searchRow.add(buttons, BorderLayout.EAST);
+
+        suggestionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        suggestionList.setBackground(new Color(240, 248, 255));
+        suggestionList.setVisibleRowCount(5);
+
+        JScrollPane suggestionsScroll = new JScrollPane(suggestionList);
+        suggestionsScroll.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        suggestionsScroll.setPreferredSize(new Dimension(0, 140));
+
+        container.add(searchRow, BorderLayout.NORTH);
+        container.add(suggestionsScroll, BorderLayout.CENTER);
 
         return container;
     }
@@ -171,6 +196,26 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         });
     }
 
+    private void attachRemoveButtonListener() {
+        removeButton.addActionListener(evt -> {
+            if (removeMarkerController == null) return;
+
+            int selectedIndex = stopsList.getSelectedIndex();
+            if (selectedIndex < 0) {
+                showPopupError("Select a stop to remove.");
+                return;
+            }
+
+            SearchState currentState = searchViewModel.getState();
+            removeMarkerController.removeAt(
+                    selectedIndex,
+                    currentState.getStopNames(),
+                    currentState.getStops()
+            );
+        });
+    }
+
+
     /**
      * When user types in search box, update the ViewModel's state.
      * (This keeps state consistent.)
@@ -181,6 +226,9 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
                 SearchState stateCopy = new SearchState(searchViewModel.getState());
                 stateCopy.setLocationName(searchInputField.getText());
                 searchViewModel.setState(stateCopy);
+                if (suggestionController != null) {
+                    suggestionController.execute(searchInputField.getText());
+                }
             }
 
             @Override public void insertUpdate(DocumentEvent e) { updateState(); }
@@ -189,13 +237,6 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         });
 
         searchInputField.addActionListener(evt -> searchButton.doClick());
-    }
-
-    private void attachSaveButtonListener() {
-        saveButton.addActionListener(e -> {
-            SearchState s = searchViewModel.getState();
-            saveStopsController.execute(s.getStopNames(), s.getStops());
-        });
     }
 
     private void attachGlobalEnterKey() {
@@ -228,6 +269,35 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         });
     }
 
+    private void attachSuggestionListListeners() {
+        suggestionList.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent evt) {
+                if (suggestionList.locationToIndex(evt.getPoint()) >= 0) {
+                    applySelectedSuggestion();
+                }
+            }
+        });
+
+        suggestionList.addKeyListener(new KeyAdapter() {
+            @Override public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    applySelectedSuggestion();
+                }
+            }
+        });
+    }
+
+    private void applySelectedSuggestion() {
+        String selection = suggestionList.getSelectedValue();
+        if (selection == null) return;
+
+        searchInputField.setText(selection);
+        SearchState updatedState = new SearchState(searchViewModel.getState());
+        updatedState.setLocationName(selection);
+        searchViewModel.setState(updatedState);
+        searchButton.doClick();
+    }
+
      private void attachRemoveButtonListener() {
         removeButton.addActionListener(evt -> {
             if (removeMarkerController == null) return;
@@ -253,57 +323,36 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        String property = evt.getPropertyName();
-        Object newValue = evt.getNewValue();
-
-        // 1. Save success / error (newValue is String)
-        if ("save_success".equals(property)) {
-            JOptionPane.showMessageDialog(
-                    this,newValue,
-                    "Save Successful",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-            return;
-        }
-
-        if ("save_error".equals(property)) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    newValue,
-                    "Save Failed",
-                    JOptionPane.ERROR_MESSAGE
-            );
-            return;
-        }
-
-        // 2. SearchState updates (newValue MUST be SearchState)
-        if ("state".equals(property)) {
-            SearchState state = (SearchState) newValue;
-            handleSearchState(state);
+        Object value = evt.getNewValue();
+        if (value instanceof SearchState state) {
+            handleSearchState(state, evt.getPropertyName());
         }
     }
 
+    private void handleSearchState(SearchState state, String propertyName) {
 
-    private void handleSearchState(SearchState state) {
-
-        // 1. update text field
         updateFields(state);
 
-        // 2. update stop list
+        // update stop list
         stopsListModel.clear();
         for (String name : state.getStopNames()) {
             stopsListModel.addElement(name);
         }
 
-        // 3. update map center
+        suggestionListModel.clear();
+        for (String suggestion : state.getSuggestions()) {
+            suggestionListModel.addElement(suggestion);
+        }
+
+        // update center if needed
         mapPanel.setCenter(state.getLatitude(), state.getLongitude());
 
-        // 4. show error popup if needed
-        if (state.getSearchError() != null) {
-            showPopupError(state.getSearchError());
-        }
-    }
+        // handle errors from search or remove marker use cases
+        if (state.getSearchError() != null) showPopupError(state.getSearchError());
+        if (state.getErrorMessage() != null) showPopupError(state.getErrorMessage());
+        if (state.getSuggestionError() != null) showPopupError(state.getSuggestionError());
 
+    }
 
     private void updateFields(SearchState state) {
         searchInputField.setText(state.getLocationName());
@@ -341,8 +390,12 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         this.searchController = searchController;
     }
 
-    public void setSaveStopsController(SaveStopsController saveStopsController) {
-        this.saveStopsController = saveStopsController;
+    public void setRemoveMarkerController(RemoveMarkerController removeMarkerController) {
+        this.removeMarkerController = removeMarkerController;
+    }
+
+    public void setSuggestionController(SuggestionController suggestionController) {
+        this.suggestionController = suggestionController;
     }
 
     public void setRemoveMarkerController(RemoveMarkerController removeMarkerController) {
