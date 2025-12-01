@@ -39,7 +39,7 @@ public class AddMarkerInteractor implements AddMarkerInputBoundary {
 
         try {
             // 2)
-            if (markerDataAccess.exists(location)) {
+            if (markerDataAccess.exist(location)) {
                 addMarkerPresenter.prepareFailView("Marker already exists at this location.");
                 return;
             }

@@ -150,6 +150,7 @@
         <item itemvalue="JUnit.AddMarkerInteractorTest$TestAddMarkerPresenter.addsNewMarkerWhenNotDuplicate" />
         <item itemvalue="JUnit.AddMarkerInteractorTest$InMemoryAddMarkerDataAccess$TestAddMarkerPresenter.addsNewMarkerWhenNotDuplicate" />
         <item itemvalue="Application.Main" />
+        <item itemvalue="JUnit.AddMarkerInteractorTest$TestAddMarkerPresenter.addsNewMarkerWhenNotDuplicate" />
       </list>
     </recent_temporary>
   </component>

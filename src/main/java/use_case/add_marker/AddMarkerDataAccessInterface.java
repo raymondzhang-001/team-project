@@ -15,7 +15,7 @@ public interface AddMarkerDataAccessInterface {
     void save(Marker marker);
 
 
-    boolean exists(Location location);
+    boolean exist(Location location);
 
 
     List<Marker> allMarkers();
