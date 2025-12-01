@@ -5,9 +5,14 @@ import interface_adapter.ViewManagerModel;
 import interface_adapter.search.SearchController;
 import interface_adapter.search.SearchPresenter;
 import interface_adapter.search.SearchViewModel;
+import interface_adapter.remove_marker.RemoveMarkerController;
+import interface_adapter.remove_marker.RemoveMarkerPresenter;
 import use_case.search.SearchInputBoundary;
 import use_case.search.SearchInteractor;
 import use_case.search.SearchOutputBoundary;
+import use_case.remove_marker.RemoveMarkerInputBoundary;
+import use_case.remove_marker.RemoveMarkerInteractor;
+import use_case.remove_marker.RemoveMarkerOutputBoundary;
 import view.SearchView;
 import view.ViewManager;
 import javax.swing.*;
@@ -48,6 +53,16 @@ public class AppBuilder {
 
         SearchController searchController = new SearchController(searchInteractor);
         searchView.setSearchController(searchController);
+
+        return this;
+    }
+
+    public AppBuilder addRemoveMarkerUseCase() {
+        final RemoveMarkerOutputBoundary removeMarkerOutputBoundary = new RemoveMarkerPresenter(searchViewModel);
+        final RemoveMarkerInputBoundary removeMarkerInteractor = new RemoveMarkerInteractor(removeMarkerOutputBoundary);
+
+        RemoveMarkerController removeMarkerController = new RemoveMarkerController(removeMarkerInteractor);
+        searchView.setRemoveMarkerController(removeMarkerController);
 
         return this;
     }
