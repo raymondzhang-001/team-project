@@ -16,3 +16,4 @@ public class SaveStopsInputData {
     public List<String> getNames() { return names; }
     public List<GeoPosition> getPositions() { return positions; }
 }
+

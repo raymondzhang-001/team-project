@@ -2,9 +2,10 @@ package view;
 
 import interface_adapter.save_stops.SaveStopsController;
 import interface_adapter.search.SearchController;
-import interface_adapter.remove_marker.RemoveMarkerController;
 import interface_adapter.search.SearchState;
 import interface_adapter.search.SearchViewModel;
+import interface_adapter.remove_marker.RemoveMarkerController;
+import interface_adapter.suggestion.SuggestionController;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -14,6 +15,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.logging.Logger;
+import org.jxmapviewer.viewer.GeoPosition;
+import java.util.List;
 
 import org.jxmapviewer.viewer.GeoPosition;
 
@@ -38,15 +41,19 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     private final JTextField searchInputField = new JTextField(15);
     private final JButton searchButton = new JButton("Search");
     private final JButton routeButton = new JButton("Route");
+    private final JButton moveUpButton = new JButton("Up");
     private final JButton saveButton = new JButton("Save");
-        private final JButton moveUpButton = new JButton("Up");
     private final JButton moveDownButton = new JButton("Down");
     private final JButton removeButton = new JButton("Remove");
+    private final DefaultListModel<String> suggestionListModel = new DefaultListModel<>();
+    private final JList<String> suggestionList = new JList<>(suggestionListModel);
+    private final Timer suggestionDebounceTimer;
 
     // Controller
     private transient SearchController searchController = null;
-    private transient SaveStopsController saveStopsController = null;
     private transient RemoveMarkerController removeMarkerController = null;
+    private transient SuggestionController suggestionController = null;
+    private transient SaveStopsController saveStopsController = null;
 
     // Map panel
     private final MapPanel mapPanel = new MapPanel();
@@ -55,12 +62,22 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     private final DefaultListModel<String> stopsListModel = new DefaultListModel<>();
     private final JList<String> stopsList = new JList<>(stopsListModel);
 
+    // UI update guard
+    private boolean updatingFromModel = false;
+
     public SearchView(SearchViewModel searchViewModel) {
 
         this.viewName = searchViewModel.getViewName();
         this.searchViewModel = searchViewModel;
 
         this.searchViewModel.addPropertyChangeListener(this);
+
+        this.suggestionDebounceTimer = new Timer(250, evt -> {
+            if (suggestionController != null) {
+                suggestionController.execute(searchInputField.getText());
+            }
+        });
+        this.suggestionDebounceTimer.setRepeats(false);
 
         setLayout(new BorderLayout());
 
@@ -75,8 +92,9 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         attachStopsListDoubleClickListener();
         attachSearchFieldListener();
         attachSearchButtonListener();
-        attachSaveButtonListener();
         attachRemoveButtonListener();
+        attachSuggestionListListeners();
+        attachSaveButtonListener();
     }
 
     /* --------------------------------------------------------------------- */
@@ -115,8 +133,21 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         buttons.add(routeButton);
         buttons.add(saveButton);
 
-        container.add(searchInputField, BorderLayout.CENTER);
-        container.add(buttons, BorderLayout.EAST);
+        JPanel searchRow = new JPanel(new BorderLayout());
+        searchRow.setOpaque(false);
+        searchRow.add(searchInputField, BorderLayout.CENTER);
+        searchRow.add(buttons, BorderLayout.EAST);
+
+        suggestionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        suggestionList.setBackground(new Color(240, 248, 255));
+        suggestionList.setVisibleRowCount(5);
+
+        JScrollPane suggestionsScroll = new JScrollPane(suggestionList);
+        suggestionsScroll.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        suggestionsScroll.setPreferredSize(new Dimension(0, 140));
+
+        container.add(searchRow, BorderLayout.NORTH);
+        container.add(suggestionsScroll, BorderLayout.CENTER);
 
         return container;
     }
@@ -150,7 +181,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     }
 
     /**
-     * Build right side map container.
+     * Build right side map container
      */
     private JPanel buildRightMapPanel() {
         JPanel right = new JPanel(new BorderLayout());
@@ -171,6 +202,25 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         });
     }
 
+    private void attachRemoveButtonListener() {
+        removeButton.addActionListener(evt -> {
+            if (removeMarkerController == null) return;
+
+            int selectedIndex = stopsList.getSelectedIndex();
+            if (selectedIndex < 0) {
+                showPopupError("Select a stop to remove.");
+                return;
+            }
+
+            SearchState currentState = searchViewModel.getState();
+            removeMarkerController.removeAt(
+                    selectedIndex,
+                    currentState.getStopNames(),
+                    currentState.getStops()
+            );
+        });
+    }
+
     /**
      * When user types in search box, update the ViewModel's state.
      * (This keeps state consistent.)
@@ -178,9 +228,12 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     private void attachSearchFieldListener() {
         searchInputField.getDocument().addDocumentListener(new DocumentListener() {
             private void updateState() {
+                if (updatingFromModel) return;
+
                 SearchState stateCopy = new SearchState(searchViewModel.getState());
                 stateCopy.setLocationName(searchInputField.getText());
                 searchViewModel.setState(stateCopy);
+                suggestionDebounceTimer.restart();
             }
 
             @Override public void insertUpdate(DocumentEvent e) { updateState(); }
@@ -197,6 +250,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
             saveStopsController.execute(s.getStopNames(), s.getStops());
         });
     }
+
 
     private void attachGlobalEnterKey() {
         this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
@@ -228,85 +282,107 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         });
     }
 
-     private void attachRemoveButtonListener() {
-        removeButton.addActionListener(evt -> {
-            if (removeMarkerController == null) return;
-
-            int selectedIndex = stopsList.getSelectedIndex();
-            if (selectedIndex < 0) {
-                showPopupError("Select a stop to remove.");
-                return;
+    private void attachSuggestionListListeners() {
+        suggestionList.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent evt) {
+                if (suggestionList.locationToIndex(evt.getPoint()) >= 0) {
+                    applySelectedSuggestion();
+                }
             }
+        });
 
-            SearchState currentState = searchViewModel.getState();
-            removeMarkerController.removeAt(
-                    selectedIndex,
-                    currentState.getStopNames(),
-                    currentState.getStops()
-            );
+        suggestionList.addKeyListener(new KeyAdapter() {
+            @Override public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    applySelectedSuggestion();
+                }
+            }
         });
     }
-    
+
+    private void applySelectedSuggestion() {
+        String selection = suggestionList.getSelectedValue();
+        if (selection == null) return;
+
+        updatingFromModel = true;
+        try {
+            searchInputField.setText(selection);
+            int caret = selection.length();
+            searchInputField.setCaretPosition(caret);
+            searchInputField.select(caret, caret);
+        } finally {
+            updatingFromModel = false;
+        }
+        SearchState updatedState = new SearchState(searchViewModel.getState());
+        updatedState.setLocationName(selection);
+        searchViewModel.setState(updatedState);
+        searchButton.doClick();
+    }
+
     /* --------------------------------------------------------------------- */
     /* PROPERTY CHANGE HANDLING                                              */
     /* --------------------------------------------------------------------- */
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        String property = evt.getPropertyName();
-        Object newValue = evt.getNewValue();
-
-        // 1. Save success / error (newValue is String)
-        if ("save_success".equals(property)) {
-            JOptionPane.showMessageDialog(
-                    this,newValue,
-                    "Save Successful",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-            return;
-        }
-
-        if ("save_error".equals(property)) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    newValue,
-                    "Save Failed",
-                    JOptionPane.ERROR_MESSAGE
-            );
-            return;
-        }
-
-        // 2. SearchState updates (newValue MUST be SearchState)
-        if ("state".equals(property)) {
-            SearchState state = (SearchState) newValue;
-            handleSearchState(state);
+        Object value = evt.getNewValue();
+        if (value instanceof SearchState state) {
+            handleSearchState(state, evt.getPropertyName());
         }
     }
 
+    private void handleSearchState(SearchState state, String propertyName) {
 
-    private void handleSearchState(SearchState state) {
-
-        // 1. update text field
         updateFields(state);
 
-        // 2. update stop list
+        // update stop list
         stopsListModel.clear();
         for (String name : state.getStopNames()) {
             stopsListModel.addElement(name);
         }
 
-        // 3. update map center
+        suggestionListModel.clear();
+        for (String suggestion : state.getSuggestions()) {
+            suggestionListModel.addElement(suggestion);
+        }
+
+        // update center if needed
         mapPanel.setCenter(state.getLatitude(), state.getLongitude());
 
-        // 4. show error popup if needed
-        if (state.getSearchError() != null) {
-            showPopupError(state.getSearchError());
-        }
+        // handle errors from search or remove marker use cases
+        if (state.getSearchError() != null) showPopupError(state.getSearchError());
+        if (state.getErrorMessage() != null) showPopupError(state.getErrorMessage());
+        if (state.getSuggestionError() != null) showPopupError(state.getSuggestionError());
+
     }
 
-
     private void updateFields(SearchState state) {
-        searchInputField.setText(state.getLocationName());
+        String newText = state.getLocationName() == null ? "" : state.getLocationName();
+        String currentText = searchInputField.getText();
+
+        if (newText.equals(currentText)) {
+            updatingFromModel = true;
+            try {
+                int caret = newText.length();
+                searchInputField.setCaretPosition(caret);
+                searchInputField.select(caret, caret);
+            } finally {
+                updatingFromModel = false;
+            }
+            return;
+        }
+
+        SwingUtilities.invokeLater(() -> {
+            updatingFromModel = true;
+            try {
+                searchInputField.setText(newText);
+                int caret = newText.length();
+                searchInputField.setCaretPosition(caret);
+                searchInputField.select(caret, caret);
+            } finally {
+                updatingFromModel = false;
+            }
+        });
     }
 
     private void showPopupError(String message) {
@@ -341,17 +417,35 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         this.searchController = searchController;
     }
 
-    public void setSaveStopsController(SaveStopsController saveStopsController) {
-        this.saveStopsController = saveStopsController;
-    }
-
     public void setRemoveMarkerController(RemoveMarkerController removeMarkerController) {
         this.removeMarkerController = removeMarkerController;
+    }
+
+    public void setSuggestionController(SuggestionController suggestionController) {
+        this.suggestionController = suggestionController;
+    }
+
+    public void setSaveStopsController(SaveStopsController saveStopsController) {
+        this.saveStopsController = saveStopsController;
     }
 
     @Override
     public void actionPerformed(ActionEvent evt) {
         Logger logger = Logger.getLogger(getClass().getName());
         logger.info("Click " + evt.getActionCommand());
+    }
+
+    public void showMarkersForCurrentStops() {
+        SearchState state = searchViewModel.getState();
+        List<GeoPosition> stops = state.getStops();
+        if (stops == null) {
+            return;
+        }
+
+        for (GeoPosition p : stops) {
+            // 👉 MapPanel에 이미 마커 추가용 메서드가 있다고 가정
+            //    예: public void addMarker(double lat, double lon)
+            mapPanel.addMarker(p.getLatitude(), p.getLongitude());
+        }
     }
 }

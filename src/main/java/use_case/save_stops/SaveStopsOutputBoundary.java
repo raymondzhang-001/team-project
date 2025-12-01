@@ -4,3 +4,4 @@ public interface SaveStopsOutputBoundary {
     void presentSuccess();
     void presentFailure(String error);
 }
+

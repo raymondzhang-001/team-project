@@ -3,13 +3,17 @@ package app;
 import data_access.FileStopListDAO;
 import data_access.OSMDataAccessObject;
 import interface_adapter.ViewManagerModel;
-import interface_adapter.save_stops.SaveStopsController;
-import interface_adapter.save_stops.SaveStopsPresenter;
+
 import interface_adapter.search.SearchController;
 import interface_adapter.search.SearchPresenter;
+import interface_adapter.search.SearchState;
 import interface_adapter.search.SearchViewModel;
+import interface_adapter.save_stops.SaveStopsController;
+import interface_adapter.save_stops.SaveStopsPresenter;
 import interface_adapter.remove_marker.RemoveMarkerController;
 import interface_adapter.remove_marker.RemoveMarkerPresenter;
+import interface_adapter.suggestion.SuggestionController;
+import interface_adapter.suggestion.SuggestionPresenter;
 import use_case.save_stops.SaveStopsInputBoundary;
 import use_case.save_stops.SaveStopsInteractor;
 import use_case.save_stops.SaveStopsOutputBoundary;
@@ -19,14 +23,18 @@ import use_case.search.SearchOutputBoundary;
 import use_case.remove_marker.RemoveMarkerInputBoundary;
 import use_case.remove_marker.RemoveMarkerInteractor;
 import use_case.remove_marker.RemoveMarkerOutputBoundary;
+import use_case.suggestion.SuggestionInputBoundary;
+import use_case.suggestion.SuggestionInteractor;
+import use_case.suggestion.SuggestionOutputBoundary;
 import view.SearchView;
 import view.ViewManager;
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.net.http.HttpClient;
 
 /**
- * Configures and wires the application using the simplified Clean Architecture graph.
+ * Configures and wires the application using the simplified Clean Architecture graph
  */
 public class AppBuilder {
 
@@ -77,9 +85,19 @@ public class AppBuilder {
         return this;
     }
 
+    public AppBuilder addSuggestionUseCase() {
+        final SuggestionOutputBoundary outputBoundary = new SuggestionPresenter(searchViewModel);
+        final SuggestionInputBoundary interactor = new SuggestionInteractor(osmDataAccessObject, outputBoundary);
+
+        SuggestionController suggestionController = new SuggestionController(interactor);
+        searchView.setSuggestionController(suggestionController);
+
+        return this;
+    }
+
     public AppBuilder addRemoveMarkerUseCase() {
         final RemoveMarkerOutputBoundary removeMarkerOutputBoundary = new RemoveMarkerPresenter(searchViewModel);
-        final RemoveMarkerInputBoundary removeMarkerInteractor = new RemoveMarkerInteractor(removeMarkerOutputBoundary);
+        RemoveMarkerInteractor removeMarkerInteractor = new RemoveMarkerInteractor(removeMarkerOutputBoundary);
 
         RemoveMarkerController removeMarkerController = new RemoveMarkerController(removeMarkerInteractor);
         searchView.setRemoveMarkerController(removeMarkerController);
@@ -91,25 +109,28 @@ public class AppBuilder {
         try {
             FileStopListDAO.LoadedStops stored = fileStopListDAO.load();
 
-            if (!stored.names.isEmpty()) {
+            if (!stored.names().isEmpty()) {
 
-                var state = searchViewModel.getState();
+                SearchState state = new SearchState(searchViewModel.getState());
 
-                // Load stops into state
-                state.setStopNames(stored.names);
-                state.setStops(stored.positions);
+                state.setStopNames(stored.names());
+                state.setStops(stored.positions());
 
-                // Center map on the last stop
-                var last = stored.positions.get(stored.positions.size() - 1);
-                state.setLatitude(last.getLatitude());
-                state.setLongitude(last.getLongitude());
+                if (!stored.positions().isEmpty()) {
+                    var firstStop = stored.positions().get(0);
+                    state.setLatitude(firstStop.getLatitude());
+                    state.setLongitude(firstStop.getLongitude());
+                    state.setLocationName(stored.names().get(0));
+                }
 
                 searchViewModel.setState(state);
                 searchViewModel.firePropertyChange();
-            }
 
-        } catch (Exception e) {
-            System.err.println("Failed to load saved stops: " + e.getMessage());
+                // 🔥 여기! — 상태 반영한 뒤 실제로 지도에 마커를 찍어주기
+                searchView.showMarkersForCurrentStops();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         return this;
@@ -125,7 +146,6 @@ public class AppBuilder {
 
         viewManagerModel.setState(searchView.getViewName());
         viewManagerModel.firePropertyChange();
-        loadStopsOnStartup();
 
         return application;
     }
