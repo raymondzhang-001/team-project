@@ -7,7 +7,7 @@ import use_case.remove_marker.RemoveMarkerInputData;
 import java.util.List;
 
 /**
- * remove marker usecase controller
+ * remove marker usecase controller.
  */
 
 public class RemoveMarkerController {
