@@ -179,7 +179,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
     }
 
     /**
-     * Build right side map container.
+     * Build right side map container
      */
     private JPanel buildRightMapPanel() {
         JPanel right = new JPanel(new BorderLayout());
