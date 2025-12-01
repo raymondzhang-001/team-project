@@ -2,7 +2,11 @@ package app;
 
 import data_access.FileStopListDAO;
 import data_access.OSMDataAccessObject;
+import data_access.RoutingDataAccessObject;
 import interface_adapter.ViewManagerModel;
+import interface_adapter.generate_route.GenerateRouteController;
+import interface_adapter.generate_route.GenerateRoutePresenter;
+import interface_adapter.generate_route.GenerateRouteViewModel;
 import interface_adapter.save_stops.SaveStopsController;
 import interface_adapter.save_stops.SaveStopsPresenter;
 import interface_adapter.search.SearchController;
@@ -10,6 +14,9 @@ import interface_adapter.search.SearchPresenter;
 import interface_adapter.search.SearchViewModel;
 import interface_adapter.remove_marker.RemoveMarkerController;
 import interface_adapter.remove_marker.RemoveMarkerPresenter;
+import use_case.generate_route.GenerateRouteInputBoundary;
+import use_case.generate_route.GenerateRouteInteractor;
+import use_case.generate_route.GenerateRouteOutputBoundary;
 import use_case.save_stops.SaveStopsInputBoundary;
 import use_case.save_stops.SaveStopsInteractor;
 import use_case.save_stops.SaveStopsOutputBoundary;
@@ -37,11 +44,13 @@ public class AppBuilder {
 
     private final HttpClient client = HttpClient.newHttpClient();
     final OSMDataAccessObject osmDataAccessObject = new OSMDataAccessObject(client);
+    final RoutingDataAccessObject routingDataAccessObject = new RoutingDataAccessObject(client);
 
     private final String stopListPath = "src/main/";
     final FileStopListDAO fileStopListDAO = new FileStopListDAO(stopListPath);
 
     private SearchViewModel searchViewModel;
+    private GenerateRouteViewModel generateRouteViewModel;
     private SearchView searchView;
 
     public AppBuilder() {
@@ -50,8 +59,19 @@ public class AppBuilder {
 
     public AppBuilder addSearchView() {
         searchViewModel = new SearchViewModel();
-        searchView = new SearchView(searchViewModel);
+        searchView = new SearchView(searchViewModel, generateRouteViewModel);
         cardPanel.add(searchView, searchView.getViewName());
+        return this;
+    }
+
+    public AppBuilder addGenerateRouteUseCase() {
+        final GenerateRouteOutputBoundary generateRoutePresenter = new GenerateRoutePresenter(generateRouteViewModel);
+        final GenerateRouteInputBoundary generateRouteInteractor = new GenerateRouteInteractor(
+                routingDataAccessObject, generateRoutePresenter);
+
+        GenerateRouteController generateRouteController = new GenerateRouteController(generateRouteInteractor);
+        searchView.setGenerateRouteController(generateRouteController);
+
         return this;
     }
 
