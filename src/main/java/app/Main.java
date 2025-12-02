@@ -19,4 +19,3 @@ public class Main {
         application.setVisible(true);
     }
 }
-      application.add(ca

@@ -4,6 +4,9 @@ import data_access.FileStopListDAO;
 import data_access.OSMDataAccessObject;
 import data_access.RoutingDataAccessObject;
 import interface_adapter.ViewManagerModel;
+import interface_adapter.generate_route.GenerateRouteController;
+import interface_adapter.generate_route.GenerateRoutePresenter;
+import interface_adapter.generate_route.GenerateRouteViewModel;
 import interface_adapter.save_stops.SaveStopsController;
 import interface_adapter.save_stops.SaveStopsPresenter;
 import interface_adapter.search.SearchController;
@@ -106,6 +109,9 @@ public class AppBuilder {
 
         SuggestionController suggestionController = new SuggestionController(interactor);
         searchView.setSuggestionController(suggestionController);
+
+        return this;
+    }
 
     public AppBuilder addRemoveMarkerUseCase() {
         final RemoveMarkerOutputBoundary removeMarkerOutputBoundary = new RemoveMarkerPresenter(searchViewModel);

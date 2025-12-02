@@ -367,7 +367,7 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
         }
     }
 
-    private void handleSearchState(SearchState state, String propertyName) {
+    private void handleSearchState(SearchState state) {
 
         // 1. update text field
         updateFields(state);
