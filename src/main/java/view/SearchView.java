@@ -360,6 +360,17 @@ public class SearchView extends JPanel implements ActionListener, PropertyChange
             return;
         }
 
+        if (evt.getNewValue() instanceof GenerateRouteState) {
+            GenerateRouteState state = (GenerateRouteState) evt.getNewValue();
+
+            if ("route".equals(evt.getPropertyName())) {
+                mapPanel.setRouteSegments(state.getRouteSegments());
+            }
+            if ("error".equals(evt.getPropertyName())) {
+                JOptionPane.showMessageDialog(this, state.getErrorMessage());
+            }
+        }
+
         // 2. SearchState updates (newValue MUST be SearchState)
         if ("state".equals(property)) {
             SearchState state = (SearchState) newValue;
