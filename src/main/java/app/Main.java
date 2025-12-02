@@ -8,7 +8,8 @@ public class Main {
         JFrame application = appBuilder
                 .addSearchView()
                 .addSearchUseCase()
-                .addSaveStopsUseCase()
+                .addRemoveMarkerUseCase()
+                .addSuggestionUseCase()
                 .addRemoveMarkerUseCase()
                 .addGenerateRouteUseCase()
                 .build();
@@ -18,3 +19,4 @@ public class Main {
         application.setVisible(true);
     }
 }
+      application.add(ca

@@ -4,9 +4,6 @@ import data_access.FileStopListDAO;
 import data_access.OSMDataAccessObject;
 import data_access.RoutingDataAccessObject;
 import interface_adapter.ViewManagerModel;
-import interface_adapter.generate_route.GenerateRouteController;
-import interface_adapter.generate_route.GenerateRoutePresenter;
-import interface_adapter.generate_route.GenerateRouteViewModel;
 import interface_adapter.save_stops.SaveStopsController;
 import interface_adapter.save_stops.SaveStopsPresenter;
 import interface_adapter.search.SearchController;
@@ -20,12 +17,17 @@ import use_case.generate_route.GenerateRouteOutputBoundary;
 import use_case.save_stops.SaveStopsInputBoundary;
 import use_case.save_stops.SaveStopsInteractor;
 import use_case.save_stops.SaveStopsOutputBoundary;
+import interface_adapter.suggestion.SuggestionController;
+import interface_adapter.suggestion.SuggestionPresenter;
 import use_case.search.SearchInputBoundary;
 import use_case.search.SearchInteractor;
 import use_case.search.SearchOutputBoundary;
 import use_case.remove_marker.RemoveMarkerInputBoundary;
 import use_case.remove_marker.RemoveMarkerInteractor;
 import use_case.remove_marker.RemoveMarkerOutputBoundary;
+import use_case.suggestion.SuggestionInputBoundary;
+import use_case.suggestion.SuggestionInteractor;
+import use_case.suggestion.SuggestionOutputBoundary;
 import view.SearchView;
 import view.ViewManager;
 import javax.swing.*;
@@ -97,6 +99,13 @@ public class AppBuilder {
 
         return this;
     }
+
+    public AppBuilder addSuggestionUseCase() {
+        final SuggestionOutputBoundary outputBoundary = new SuggestionPresenter(searchViewModel);
+        final SuggestionInputBoundary interactor = new SuggestionInteractor(osmDataAccessObject, outputBoundary);
+
+        SuggestionController suggestionController = new SuggestionController(interactor);
+        searchView.setSuggestionController(suggestionController);
 
     public AppBuilder addRemoveMarkerUseCase() {
         final RemoveMarkerOutputBoundary removeMarkerOutputBoundary = new RemoveMarkerPresenter(searchViewModel);
